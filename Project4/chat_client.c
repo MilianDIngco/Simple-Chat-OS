@@ -8,7 +8,7 @@
 #include <netdb.h> 
 
 #define PORT_NUM 1004
-
+//america yahh, hallo *hallo hallo hallo*
 void error(const char *msg)
 {
 	perror(msg);
