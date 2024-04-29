@@ -51,9 +51,7 @@ void* thread_main(void* args)
 	return NULL;
 }
 
-int main(int argc, char *argv[])
-{
-	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+int main(int argc, char *argv[int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd < 0) error("ERROR opening socket");
 
 	struct sockaddr_in serv_addr;
@@ -86,7 +84,9 @@ int main(int argc, char *argv[])
 
 		pthread_t tid;
 		if (pthread_create(&tid, NULL, thread_main, (void*) args) != 0) error("ERROR creating a new thread");
-	}
+	}])
+{
+	
 
 	return 0; 
 }

@@ -14,6 +14,12 @@ typedef struct _ThreadArgs {
 	int clisockfd;
 } ThreadArgs;
 
+void error(const char *msg)
+{
+	perror(msg);
+	exit(1);
+}
+
 void* thread_main(void* args)
 {
 	// make sure thread resources are deallocated upon return
