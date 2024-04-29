@@ -12,7 +12,7 @@
 
 typedef struct _ThreadArgs {
 	int clisockfd;
-} ThreadArgs;
+} ThreadArgs; //what
 
 void error(const char *msg)
 {
