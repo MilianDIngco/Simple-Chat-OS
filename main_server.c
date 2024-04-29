@@ -12,7 +12,7 @@
 
 typedef struct _ThreadArgs {
 	int clisockfd;
-} ThreadArgs
+} ThreadArgs;
 
 void* thread_main(void* args)
 {
