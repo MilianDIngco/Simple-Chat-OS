@@ -12,6 +12,11 @@
 #define USERNAME_SIZE 50
 #define MSG_BUFFER_SIZE 256
 
+//--------------- COLOR ARRAY T-T ------------------------------
+//static array for colors to print
+static int color_Print[16] = {7, 8, 52, 1, 166, 214, 3, 2, 22, 6, 117, 26, 12, 99, 219, 205};
+int used_Color[16]; //used to determine if a corresponding color was used
+
 //--------------- STRUCTS ;D -----------------------------------
 
 typedef struct _ThreadArgs {
