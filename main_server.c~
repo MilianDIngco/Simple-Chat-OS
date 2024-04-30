@@ -13,6 +13,11 @@
 #define MSG_BUFFER_SIZE 256
 #define MAX_CLIENTS 16
 
+//--------------- COLOR ARRAY T-T ------------------------------
+//static array for colors to print
+static int color_Print[16] = {7, 8, 52, 1, 166, 214, 3, 2, 22, 6, 117, 26, 12, 99, 219, 205};
+int used_Color[16]; //used to determine if a corresponding color was used
+
 //--------------- STRUCTS ;D -----------------------------------
 
 typedef struct _ThreadArgs {
@@ -79,7 +84,8 @@ void* thread_main(void* args)
 		if (nsen != nrcv) error("ERROR send() failed");
 
 		nrcv = recv(clisockfd, buffer, 256, 0);
-		if (nrcv < 0) error("ERROR recv() failed thread_main");
+		if (strlen(buffer) == 0) break;
+		if (nrcv < 0) error("ERROR recv() failed thread");
 	}
 
 	send_all("GAYS");

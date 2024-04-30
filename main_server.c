@@ -86,7 +86,8 @@ void* thread_main(void* args)
 		if (nsen != nrcv) error("ERROR send() failed");
 
 		nrcv = recv(clisockfd, buffer, 256, 0);
-		if (nrcv < 0) error("ERROR recv() failed thread_main");
+		if (strlen(buffer) == 0) break;
+		if (nrcv < 0) error("ERROR recv() failed thread");
 	}
 
 	send_all("GAYS");

@@ -47,8 +47,13 @@ int main(int argc, char *argv[])
 	memset(username, 0, USERNAME_SIZE);
 	printf("Please enter a username: ");
 	scanf("%s", username); //read user name
-	send(sockfd, username, strlen(username), 0);
 	//add check is less than username size
+
+	//clear input buffer
+	int c;
+	while ((c = getchar()) != '\n' && c != EOF);
+	
+	send(sockfd, username, strlen(username), 0);
 
 	while (1) {
 		printf("Please enter the message: ");
@@ -71,7 +76,7 @@ int main(int argc, char *argv[])
 
 		printf("Message from server: %s\n", buffer);
 	}
-
+	printf("dipping");
 	close(sockfd);
 
 	return 0;
