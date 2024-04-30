@@ -9,6 +9,7 @@
 #include <pthread.h>
 
 #define PORT_NUM 10004
+#define USERNAME_SIZE 50
 
 typedef struct _ThreadArgs {
 	int clisockfd;
@@ -16,7 +17,7 @@ typedef struct _ThreadArgs {
 
 //structure to define client info for each unique client
 typedef struct ClientInfo{
-	char cli_username[50];
+	char cli_username[USERNAME_SIZE];
 	int clisockfd;
 	int chat_room_no;
 } ClientInfo;
@@ -83,7 +84,7 @@ int main(int argc, char** argv) {
 		if (newsockfd < 0) error("ERROR on accept");
 
 		//ask for username
-		char username[50]; 
+		char username[USERNAME_SIZE]; 
 		printf("Please enter a username: ");
 		scanf("%s", username); //read user name
 
