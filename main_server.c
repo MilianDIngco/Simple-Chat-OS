@@ -90,8 +90,7 @@ void* thread_main(void* args)
 		if (nrcv < 0) error("ERROR recv() failed thread");
 	}
 
-	send_all("GAYS");
-	
+	send_all("A user has left");
 	close(clisockfd);
 	num_clients--;
 	//-------------------------------
