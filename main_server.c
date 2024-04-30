@@ -77,6 +77,7 @@ void* thread_main(void* args)
 
 int main(int argc, char** argv) {
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	int username_sock; //for  
 	if (sockfd < 0) error("ERROR opening socket");
 
 	struct sockaddr_in serv_addr;
@@ -99,11 +100,10 @@ int main(int argc, char** argv) {
 			(struct sockaddr *) &cli_addr, &clen);
 		if (newsockfd < 0) error("ERROR on accept");
 
-		//ask for username
-		char username[USERNAME_SIZE]; 
-		printf("Please enter a username: ");
-		scanf("%s", username); //read user name
-
+		//receive username
+		char username[USERNAME_SIZE];
+		recv(username_sock, username, sizeof(username), 0);
+		
 		//make new client
 		struct ClientInfo new_client;
 		strncpy(new_client.cli_username, username, sizeof(new_client.cli_username));

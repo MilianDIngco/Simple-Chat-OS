@@ -8,6 +8,7 @@
 #include <netdb.h> 
 
 #define PORT_NUM 10004
+#define USERNAME_SIZE 50
 
 void error(const char *msg)
 {
@@ -42,6 +43,13 @@ int main(int argc, char *argv[])
 	int n;
 
 	while (1) {
+		//ask for username
+		char username[USERNAME_SIZE]; 
+		printf("Please enter a username: ");
+		scanf("%s", username); //read user name
+		send(sockfd, username, strlen(username), 0);
+
+
 		printf("Please enter the message: ");
 		memset(buffer, 0, 256);
 		fgets(buffer, 255, stdin);
