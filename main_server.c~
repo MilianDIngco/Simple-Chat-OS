@@ -9,11 +9,8 @@
 #include <pthread.h>
 
 #define PORT_NUM 10004
-<<<<<<< HEAD
 #define USERNAME_SIZE 50
-=======
 #define MSG_BUFFER_SIZE 256
->>>>>>> 1f270b3 (started send_all() function)
 
 typedef struct _ThreadArgs {
 	int clisockfd;

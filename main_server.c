@@ -12,6 +12,8 @@
 #define USERNAME_SIZE 50
 #define MSG_BUFFER_SIZE 256
 
+//--------------- STRUCTS ;D -----------------------------------
+
 typedef struct _ThreadArgs {
 	int clisockfd;
 } ThreadArgs; //what
@@ -23,6 +25,11 @@ typedef struct ClientInfo{
 	int chat_room_no;
 } ClientInfo;
 
+//-------------- GLOBAL VARIABLES :3> --------------------------
+int num_clients = 0;
+ClientInfo* client_list;
+
+//-------------- FUNCTIONS >:3 ---------------------------------
 void error(const char *msg)
 {
 	perror(msg);
@@ -69,6 +76,8 @@ void* thread_main(void* args)
 		if (nrcv < 0) error("ERROR recv() failed");
 	}
 
+	send_all("GAYS");
+
 	close(clisockfd);
 	//-------------------------------
 
@@ -109,6 +118,8 @@ int main(int argc, char** argv) {
 		strncpy(new_client.cli_username, username, sizeof(new_client.cli_username));
 		new_client.clisockfd = newsockfd; //ip addr
 		//new_client.chat_room_no = room_no; //which chat room they're in
+		//keep track of numbr of clients
+		num_clients++;
 
 		printf("%s has connected: %s\n", username, inet_ntoa(cli_addr.sin_addr));
 
