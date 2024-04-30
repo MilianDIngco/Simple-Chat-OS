@@ -85,34 +85,34 @@ void* thread_main(void* args)
 }
 
 int main(int argc, char** argv) {
+	// CREATE SERVER SOCKET
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	int username_sock; //for  
-	if (sockfd < 0) error("ERROR opening socket");
-
 	struct sockaddr_in serv_addr;
 	socklen_t slen = sizeof(serv_addr);
 	memset((char*) &serv_addr, 0, sizeof(serv_addr));
+	// SET SOCKET OPTIONS
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = INADDR_ANY;	
 	serv_addr.sin_port = htons(PORT_NUM);
-
+	// BIND SOCKET TO ADDRESS SPACE
 	int status = bind(sockfd, 
 			(struct sockaddr*) &serv_addr, slen);
 	if (status < 0) error("ERROR on binding");
-
+	// LISTEN FOR CLIENTS
 	listen(sockfd, 5);
 
 	while(1) {
+		// ACCEPT PENDING CLIENTS
 		struct sockaddr_in cli_addr;
 		socklen_t clen = sizeof(cli_addr);
-		int newsockfd = accept(sockfd, 
-			(struct sockaddr *) &cli_addr, &clen);
+		int newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clen);
 		if (newsockfd < 0) error("ERROR on accept");
 
 		//receive username
 		char username[USERNAME_SIZE];
-		recv(username_sock, username, sizeof(username), 0);
-		
+		int username_success = recv(newsockfd, username, USERNAME_SIZE, 0);
+		if (username_success < 0) error("ERROR failed to get username");
+
 		//make new client
 		struct ClientInfo new_client;
 		strncpy(new_client.cli_username, username, sizeof(new_client.cli_username));
