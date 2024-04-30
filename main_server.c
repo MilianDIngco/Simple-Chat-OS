@@ -100,20 +100,26 @@ void* thread_main(void* args)
 }
 
 int main(int argc, char** argv) {
+	srand(time(NULL)); //random number generator for colors
+
 	client_list = (struct ClientInfo*)malloc(sizeof(struct ClientInfo) * MAX_CLIENTS);
+	
 	// CREATE SERVER SOCKET
     	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	struct sockaddr_in serv_addr;
 	socklen_t slen = sizeof(serv_addr);
 	memset((char*) &serv_addr, 0, sizeof(serv_addr));
+	
 	// SET SOCKET OPTIONS
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = INADDR_ANY;	
 	serv_addr.sin_port = htons(PORT_NUM);
+	
 	// BIND SOCKET TO ADDRESS SPACE
 	int status = bind(sockfd, 
 			(struct sockaddr*) &serv_addr, slen);
 	if (status < 0) error("ERROR on binding");
+	
 	// LISTEN FOR CLIENTS
 	listen(sockfd, 5);
 
@@ -132,6 +138,14 @@ int main(int argc, char** argv) {
 
 		//make new client
 		struct ClientInfo new_client;
+		int client_color;
+		
+		do{ //know y'all haven't seen a do while in a hot second
+			client_color = rand() % 16; //random number between 0 - 15
+		} while(used_Color[client_color]); //will loop again if index is used
+		used_Color[client_color] = 1; //mark as used
+		new_client.color = client_color;
+
 		strncpy(new_client.cli_username, username, sizeof(new_client.cli_username));
 		new_client.clisockfd = newsockfd; //ip addr
 		//new_client.chat_room_no = room_no; //which chat room they're in
