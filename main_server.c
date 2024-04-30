@@ -10,6 +10,7 @@
 
 #define PORT_NUM 10004
 #define USERNAME_SIZE 50
+#define MSG_BUFFER_SIZE 256
 
 typedef struct _ThreadArgs {
 	int clisockfd;
@@ -28,6 +29,21 @@ void error(const char *msg)
 	exit(1);
 }
 
+void send_all(const char *msg)
+{
+	char buffer[MSG_BUFFER_SIZE];
+	for(int i = 0; i < num_clients; i++) {
+		int msg_len = strlen(msg);
+		// calculates number of times will need to send() for buffer size
+		int num_sends = msg_len / MSG_BUFFER_SIZE + ((msg_len == MSG_BUFFER_SIZE) ? 0 : 1);
+		for(int n = 0; n < num_sends; n++) {
+			// gets client fd
+			int client_fd = client_list[i].clisockfd;
+			printf("%d\n", client_fd);
+		}
+	}
+}
+
 void* thread_main(void* args)
 {
 	// make sure thread resources are deallocated upon return
@@ -39,7 +55,7 @@ void* thread_main(void* args)
 
 	//-------------------------------
 	// Now, we receive/send messages
-	char buffer[256];
+	char buffer[MSG_BUFFER_SIZE];
 	int nsen, nrcv;
 
 	nrcv = recv(clisockfd, buffer, 256, 0);

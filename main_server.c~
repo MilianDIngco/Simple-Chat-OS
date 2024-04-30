@@ -9,10 +9,43 @@
 #include <pthread.h>
 
 #define PORT_NUM 10004
+<<<<<<< HEAD
+#define USERNAME_SIZE 50
+=======
+#define MSG_BUFFER_SIZE 256
+>>>>>>> 1f270b3 (started send_all() function)
 
 typedef struct _ThreadArgs {
 	int clisockfd;
-} ThreadArgs
+} ThreadArgs; //what
+
+//structure to define client info for each unique client
+typedef struct ClientInfo{
+	char cli_username[USERNAME_SIZE];
+	int clisockfd;
+	int chat_room_no;
+} ClientInfo;
+
+void error(const char *msg)
+{
+	perror(msg);
+	exit(1);
+}
+
+void send_all(const char *msg)
+{
+	char buffer[MSG_BUFFER_SIZE];
+	for(int i = 0; i < num_clients; i++) {
+		int msg_len = strlen(msg);
+		// calculates number of times will need to send() for buffer size
+		int num_sends = msg_len / MSG_BUFFER_SIZE + ((msg_len == MSG_BUFFER_SIZE) ? 0 : 1);
+		for(int n = 0; n < num_sends; n++) {
+			// gets client fd
+			int client_fd = client_list[i].clisockfd;
+			printf("%d\n", client_fd);
+		}
+	}
+}
 
 void* thread_main(void* args)
 {
@@ -25,7 +58,7 @@ void* thread_main(void* args)
 
 	//-------------------------------
 	// Now, we receive/send messages
-	char buffer[256];
+	char buffer[MSG_BUFFER_SIZE];
 	int nsen, nrcv;
 
 	nrcv = recv(clisockfd, buffer, 256, 0);
@@ -69,7 +102,18 @@ int main(int argc, char** argv) {
 			(struct sockaddr *) &cli_addr, &clen);
 		if (newsockfd < 0) error("ERROR on accept");
 
-		printf("Connected: %s\n", inet_ntoa(cli_addr.sin_addr));
+		//ask for username
+		char username[USERNAME_SIZE]; 
+		printf("Please enter a username: ");
+		scanf("%s", username); //read user name
+
+		//make new client
+		struct ClientInfo new_client;
+		strncpy(new_client.cli_username, username, sizeof(new_client.cli_username));
+		new_client.clisockfd = newsockfd; //ip addr
+		//new_client.chat_room_no = room_no; //which chat room they're in
+
+		printf("%s has connected: %s\n", username, inet_ntoa(cli_addr.sin_addr));
 
 		// prepare ThreadArgs structure to pass client socket
 		ThreadArgs* args = (ThreadArgs*) malloc(sizeof(ThreadArgs));
