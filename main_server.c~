@@ -11,6 +11,7 @@
 #define PORT_NUM 10004
 #define USERNAME_SIZE 50
 #define MSG_BUFFER_SIZE 256
+#define MAX_CLIENTS 16
 
 //--------------- STRUCTS ;D -----------------------------------
 
@@ -46,7 +47,12 @@ void send_all(const char *msg)
 		for(int n = 0; n < num_sends; n++) {
 			// gets client fd
 			int client_fd = client_list[i].clisockfd;
-			printf("%d\n", client_fd);
+			
+			//copy 256 bytes into buffer
+			memset(buffer, 0, MSG_BUFFER_SIZE);	
+			memcpy(buffer, msg + (n * MSG_BUFFER_SIZE), MSG_BUFFER_SIZE);
+			//sends message to clients
+			send(client_fd, buffer, ((n == num_sends - 1) ? msg_len % MSG_BUFFER_SIZE : MSG_BUFFER_SIZE), 0);
 		}
 	}
 }
@@ -73,20 +79,22 @@ void* thread_main(void* args)
 		if (nsen != nrcv) error("ERROR send() failed");
 
 		nrcv = recv(clisockfd, buffer, 256, 0);
-		if (nrcv < 0) error("ERROR recv() failed");
+		if (nrcv < 0) error("ERROR recv() failed thread_main");
 	}
 
 	send_all("GAYS");
-
+	
 	close(clisockfd);
+	num_clients--;
 	//-------------------------------
 
 	return NULL;
 }
 
 int main(int argc, char** argv) {
+	client_list = (struct ClientInfo*)malloc(sizeof(struct ClientInfo) * MAX_CLIENTS);
 	// CREATE SERVER SOCKET
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	struct sockaddr_in serv_addr;
 	socklen_t slen = sizeof(serv_addr);
 	memset((char*) &serv_addr, 0, sizeof(serv_addr));
@@ -110,6 +118,7 @@ int main(int argc, char** argv) {
 
 		//receive username
 		char username[USERNAME_SIZE];
+		memset(username, 0, USERNAME_SIZE);
 		int username_success = recv(newsockfd, username, USERNAME_SIZE, 0);
 		if (username_success < 0) error("ERROR failed to get username");
 
@@ -118,15 +127,21 @@ int main(int argc, char** argv) {
 		strncpy(new_client.cli_username, username, sizeof(new_client.cli_username));
 		new_client.clisockfd = newsockfd; //ip addr
 		//new_client.chat_room_no = room_no; //which chat room they're in
-		//keep track of numbr of clients
-		num_clients++;
+		//append client to list
+		client_list[num_clients++] = new_client;
 
-		printf("%s has connected: %s\n", username, inet_ntoa(cli_addr.sin_addr));
+		if (num_clients > 1) {
+			char connected_str[3 + USERNAME_SIZE + 500];
+			sprintf(connected_str, "%d: %s has connected: %s\n", num_clients, username, inet_ntoa(cli_addr.sin_addr));
+			send_all(connected_str);		
+		}
+
+		printf("%d: %s has connected: %s\n", num_clients, username, inet_ntoa(cli_addr.sin_addr));
 
 		// prepare ThreadArgs structure to pass client socket
 		ThreadArgs* args = (ThreadArgs*) malloc(sizeof(ThreadArgs));
 		if (args == NULL) error("ERROR creating thread argument");
-		
+				
 		args->clisockfd = newsockfd;
 
 		pthread_t tid;

@@ -41,15 +41,16 @@ int main(int argc, char *argv[])
 
 	char buffer[256];
 	int n;
+		
+	//ask for username
+	char username[USERNAME_SIZE]; 
+	memset(username, 0, USERNAME_SIZE);
+	printf("Please enter a username: ");
+	scanf("%s", username); //read user name
+	send(sockfd, username, strlen(username), 0);
+	//add check is less than username size
 
 	while (1) {
-		//ask for username
-		char username[USERNAME_SIZE]; 
-		printf("Please enter a username: ");
-		scanf("%s", username); //read user name
-		send(sockfd, username, strlen(username), 0);
-
-
 		printf("Please enter the message: ");
 		memset(buffer, 0, 256);
 		fgets(buffer, 255, stdin);

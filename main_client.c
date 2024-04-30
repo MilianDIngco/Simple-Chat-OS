@@ -44,8 +44,15 @@ int main(int argc, char *argv[])
 		
 	//ask for username
 	char username[USERNAME_SIZE]; 
+	memset(username, 0, USERNAME_SIZE);
 	printf("Please enter a username: ");
 	scanf("%s", username); //read user name
+	//add check is less than username size
+
+	//clear input buffer
+	int c;
+	while ((c = getchar()) != '\n' && c != EOF);
+	
 	send(sockfd, username, strlen(username), 0);
 
 	while (1) {
