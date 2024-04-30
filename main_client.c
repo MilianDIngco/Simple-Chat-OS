@@ -76,7 +76,10 @@ int main(int argc, char *argv[])
 
 		printf("Message from server: %s\n", buffer);
 	}
-
+	
+	// ensure proper closure
+	n = recv(sockfd, buffer, 50, 0);
+	if (n < 0) error("FAILED to recv last close msg");
 	close(sockfd);
 
 	return 0;
