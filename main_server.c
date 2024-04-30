@@ -17,6 +17,7 @@
 //static array for colors to print
 static int color_Print[16] = {7, 8, 52, 1, 166, 214, 3, 2, 22, 6, 117, 26, 12, 99, 219, 205};
 int used_Color[16]; //used to determine if a corresponding color was used
+//printf("\033[38;5;%dm", i);
 
 //--------------- STRUCTS ;D -----------------------------------
 
@@ -26,9 +27,10 @@ typedef struct _ThreadArgs {
 
 //structure to define client info for each unique client
 typedef struct ClientInfo{
-	char cli_username[USERNAME_SIZE];
-	int clisockfd;
-	int chat_room_no;
+	char cli_username[USERNAME_SIZE]; //username
+	int clisockfd; //for ip addr
+	int chat_room_no; //what chat room they're in
+	int color; //color of their text
 } ClientInfo;
 
 //-------------- GLOBAL VARIABLES :3> --------------------------
