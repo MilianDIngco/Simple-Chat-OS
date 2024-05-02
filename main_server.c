@@ -76,7 +76,11 @@ void* thread_main(void* args)
 	//-------------------------------
 	// Now, we receive/send messages
 	char buffer[MSG_BUFFER_SIZE];
+	memset(buffer, 0, MSG_BUFFER_SIZE);
 	int nsen, nrcv;
+	// msg_done = 0 : a message is still sending
+	// msg_done = 1 : message is already done
+	int msg_done = 0;
 
 	nrcv = recv(clisockfd, buffer, 256, 0);
 	if (nrcv < 0) error("ERROR recv() failed");
@@ -85,8 +89,15 @@ void* thread_main(void* args)
 		nsen = send(clisockfd, buffer, nrcv, 0);
 		if (nsen != nrcv) error("ERROR send() failed");
 
-		nrcv = recv(clisockfd, buffer, 256, 0);
-		if (strlen(buffer) == 0) break;
+		memset(buffer, 0, MSG_BUFFER_SIZE);
+		nrcv = recv(clisockfd, buffer, MSG_BUFFER_SIZE, 0);
+		/*char* eom = strchr(buffer, '\0');
+		if (eom != NULL) {
+			msg_done = 0;
+		} else {
+			msg_done = 1;
+		}*/
+		if (strlen(buffer) == 0 /*&& msg_done == 1*/) break;
 		if (nrcv < 0) error("ERROR recv() failed thread");
 	}
 
@@ -137,10 +148,9 @@ int main(int argc, char** argv) {
 
 		//make new client
 		struct ClientInfo new_client;
-		int client_color;
-		
+		int client_color = rand() % 16;
 		do{ //know y'all haven't seen a do while in a hot second
-			client_color = rand() % 16; //random number between 0 - 15
+			client_color++; //random number between 0 - 15
 		} while(used_Color[client_color]); //will loop again if index is used
 		used_Color[client_color] = 1; //mark as used
 		new_client.color = client_color;

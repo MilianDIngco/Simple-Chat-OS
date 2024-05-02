@@ -12,6 +12,8 @@
 #define USERNAME_SIZE 50
 #define MSG_BUFFER_SIZE 256
 #define MSG_SIZE 65536
+#define START_MSG '\x02'
+#define END_MSG '\x03'
 
 pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -27,44 +29,75 @@ void error(const char *msg)
 	exit(0);
 }
 
+void print_all(char* message) {
+	printf("\n");
+	for(int i = 0; i < strlen(message) + 1; i++) {
+		if(message[i] == START_MSG) 
+			printf("|x02|");
+		if(message[i] == END_MSG)
+			printf("|x03|");
+		if(message[i] == 0)
+			printf("|end|");
+		printf("%c", message[i]);
+	}
+
+}
+
+/* TAKES 
+ * buffer to fill
+ * str of characters
+ * start index of buffer you want to append from
+ * length of characters you want to copy
+ */
+void fill_buffer(char* buffer, char* str, int start, int length, int str_start) {
+	for (int i = start; i < start + length; i++) {
+		if (i >= MSG_BUFFER_SIZE) {
+			printf("OUTSIDE BOUNDS");
+			break;
+		}
+		buffer[i] = str[i - start + str_start];	
+	}
+	buffer[start + length] = '\0';
+}
+
 // THREAD FOR RECEIVING FROM SERVER
 void* recv_thread(void* args) {
-	
+
+	printf("RECV \n");
+
 	pthread_detach(pthread_self());
 
 	int sockfd = ((ThreadArgs*) args)->clisockfd;
 	free(args);
 
-	char buffer[MSG_BUFFER_SIZE];
+	char buffer[MSG_BUFFER_SIZE + 1];
 	char message[MSG_SIZE];
 	memset(message, 0, MSG_SIZE);
 	int nrcv = 0;
 	int total_nrcv = 0;
 
-	nrcv = recv(sockfd, buffer, MSG_BUFFER_SIZE, 0);
-	if (nrcv < 0) error("ERROR recv() failed");
-	while (nrcv > 0 && !client_leave) {
+	do {
 		memset(buffer, 0, MSG_BUFFER_SIZE);
-                nrcv = recv(sockfd, buffer, MSG_BUFFER_SIZE, 0);
+        nrcv = recv(sockfd, buffer, MSG_BUFFER_SIZE, 0);
+		buffer[MSG_BUFFER_SIZE] = '\0';
 		total_nrcv += nrcv;
-                if (strlen(buffer) == 0) break;
-    	        if (nrcv < 0) error("ERROR recv() failed thread");
+        if (strlen(buffer) == 0) break;
+    	if (nrcv < 0) error("ERROR recv() failed thread");
 		// concat buffer to message
 		if (total_nrcv < MSG_SIZE) {
 			strcat(message, buffer);
 		} else {
-			printf("Message Too Long: ");
 			message[MSG_SIZE - 1] = '\0';
 		}
 
-		// check if message contains null terminator
-		char* eom = strchr(buffer, '\0');
+		// check if message contains end character
+		char* eom = strchr(buffer, END_MSG);
 		if (eom != NULL) {
-			printf("SERVER: %s\n", message);
+			printf("\nSERVER: %s\n", message);
 			total_nrcv = 0;
 			memset(message, 0, MSG_SIZE);
 		}
-	}
+	} while (nrcv > 0 && !client_leave);
    
 	return NULL;
 }
@@ -78,18 +111,67 @@ void* send_thread(void* args) {
 	free(args);
 	
 	char buffer[MSG_BUFFER_SIZE];
+	char message[MSG_SIZE];
+	memset(message, 0, MSG_SIZE);
 	int nsend = 0;
 
 	while (1) {
-		memset(buffer, 0, MSG_BUFFER_SIZE);
-		fgets(buffer, MSG_BUFFER_SIZE, stdin);
+		// GET FULL MESSAGE	
+		fgets(message, MSG_SIZE, stdin);
 
+		int msg_len = strlen(message);
+		int bytes_sent = 0; 
+	
+		// HANDLE EXIT CASE
 		//get rid of \n if empty string
-		if (strlen(buffer) == 1) buffer[0] = '\0';
+		if (strlen(message) == 1) {
+			buffer[0] = '\0';
+			send(sockfd, buffer, strlen(buffer), 0);
+			break;
+		} 
 
-		nsend = send(sockfd, buffer, strlen(buffer), 0);
-		if (nsend < 0) error("ERROR writing to socket");
-		if (nsend == 0) break;
+		//get rid of new line
+		message[--msg_len] = '\0';
+
+		while (bytes_sent < msg_len + 1) 
+		{
+			// load buffer
+			// if first buffer sent, first character is message start
+			memset(buffer, 0, MSG_BUFFER_SIZE);
+			if (bytes_sent == 0) 
+			{
+				buffer[0] = START_MSG;
+				if (msg_len <= MSG_BUFFER_SIZE - 3) 
+				{
+					// fills buffer up to index 254; saves buffer[255] for msg_end character
+					fill_buffer(buffer, message, 1, msg_len, 0);
+					buffer[msg_len + 1] = END_MSG;	// ADD 1 TO THIS IF CHARACTERS ARE CUT OFF
+					buffer[msg_len + 2] = '\0';
+					bytes_sent = msg_len + 1;
+				} else {
+					// fills buffer up to index 255
+					fill_buffer(buffer, message, 1, MSG_BUFFER_SIZE - 2, 0); 
+					// this is fine because its guaranteed that this buffer will be totally filled since the message length > buffer size
+					bytes_sent += (MSG_BUFFER_SIZE - 2);
+				}
+			} else {
+				// if end of message
+				if (msg_len - bytes_sent - 1 <= MSG_BUFFER_SIZE - 2) 
+				{
+					fill_buffer(buffer, message, 0, msg_len - bytes_sent, bytes_sent);
+					buffer[msg_len - bytes_sent] = END_MSG;
+					buffer[msg_len - bytes_sent + 1] = '\0';
+					bytes_sent = msg_len + 1;
+				} else {
+					// bytes sent here also fill buffer entirely
+					fill_buffer(buffer, message, 0, MSG_BUFFER_SIZE - 1, bytes_sent);
+					buffer[MSG_BUFFER_SIZE - 1] = '\0';
+					bytes_sent += MSG_BUFFER_SIZE - 1;
+				}
+			}
+			nsend = send(sockfd, buffer, strlen(buffer), 0);
+			if (nsend < 0) error("ERROR writing to socket");
+		}
 	}	
 
         close(sockfd);
