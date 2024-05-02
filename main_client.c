@@ -1,3 +1,8 @@
+/*
+TO ADD
+USERNAME CANNOT INCLUDE [
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -14,6 +19,7 @@
 #define MSG_SIZE 65536
 #define START_MSG '\x02'
 #define END_MSG '\x03'
+#define HEADER_MSG '\x01'
 
 pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -29,8 +35,13 @@ void error(const char *msg)
 	exit(0);
 }
 
+void strcat_char(char* destination, char source) {
+    int len = strlen(destination);
+    destination[len] = source;
+    destination[len + 1] = '\0';
+}
+
 void print_all(char* message) {
-	printf("\n");
 	for(int i = 0; i < strlen(message) + 1; i++) {
 		if(message[i] == START_MSG) 
 			printf("|x02|");
@@ -58,6 +69,50 @@ void fill_buffer(char* buffer, char* str, int start, int length, int str_start) 
 		buffer[i] = str[i - start + str_start];	
 	}
 	buffer[start + length] = '\0';
+}
+
+/*
+final_message - an empty string you will use to send the final string to the server
+username - client's username
+chat_no - chat number
+ip_addr - clients ip
+message - string message you want to send
+*/
+void create_message(char* f_msg, char* username, int chat_no, char* ip_addr, char* message) {
+    memset(f_msg, 0, MSG_BUFFER_SIZE);
+    // format strings to have brackets surrounding them
+
+    char b_username[USERNAME_SIZE + 2 + 1];
+    char b_ip_addr[20 + 2 + 1];
+    char b_chat_no[2 + 2 + 1];
+
+    sprintf(b_username, "[%s", username);
+    sprintf(b_chat_no, "[%d", chat_no);
+    sprintf(b_ip_addr, "[%s", ip_addr);
+
+    // get string lengths
+    size_t usnm_len = strlen(b_username);
+    size_t ip_len = strlen(b_ip_addr);
+    size_t msg_len = strlen(message);
+    size_t chat_no_len = strlen(b_chat_no);
+
+    // START HEADER
+
+    f_msg[0] = HEADER_MSG;
+
+    strcat(f_msg, b_username);
+    
+    strcat(f_msg, b_chat_no);
+
+    strcat(f_msg, b_ip_addr);
+
+    // START MESSAGE
+
+    strcat(f_msg, "\x02");
+
+    strcat(f_msg, message);
+
+    strcat(f_msg, "\x03");
 }
 
 // THREAD FOR RECEIVING FROM SERVER

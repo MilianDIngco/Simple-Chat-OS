@@ -44,6 +44,48 @@ void error(const char *msg)
 	exit(1);
 }
 
+void strcat_char(char* destination, char source) {
+    int len = strlen(destination);
+    destination[len] = source;
+    destination[len + 1] = '\0';
+}
+
+/*
+Takes f_msg, which is a string sent by the client to decode
+Takes empty string username by reference to load into
+Takes chat number by reference
+Takes message by reference
+Lotsa parsing woohoo
+*/
+void decode_message(char* username, int* chat_no, char* ip_addr, char* message, char* f_msg) {
+    size_t f_msg_len = strlen(f_msg);
+    char chat_str[3];
+    memset(chat_str, 0, 3);
+    // INT MAP 1: USERNAME, 2: CHAT_NO, 3: IP_ADDR, 4: MESSAGE, 0: SOMETHING WENT HORRIBLY WRONG
+    int map = 0;
+    // counter map 1: USERNAME, 2: CHAT_NO, 3: IP_ADDR
+    int bracket_counter = 0; 
+    for(int i = 0; i < f_msg_len; i++) {
+        if (f_msg[i] == START_MSG) 
+            map = 4;
+        if (f_msg[i] == '[' && bracket_counter < 3) {
+            bracket_counter++;
+            map++;
+        }
+        if (map == 1 && f_msg[i] != '[') {
+            strcat_char(username, f_msg[i]);
+        } else if (map == 2 && f_msg[i] != '[') {
+            strcat_char(chat_str, f_msg[i]);
+        } else if (map == 3 && f_msg[i] != '[') {
+            strcat_char(ip_addr, f_msg[i]);
+        } else if (map == 4 && f_msg[i] != START_MSG) {
+            strcat_char(message, f_msg[i]);
+        }
+    }
+
+    *chat_no = atoi(chat_str); 
+}
+
 void send_all(const char *msg)
 {
 	char buffer[MSG_BUFFER_SIZE];
