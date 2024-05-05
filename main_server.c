@@ -220,6 +220,8 @@ void* thread_main(void* args)
 		nsen = send(clisockfd, buffer, nrcv, 0);
 		if (nsen != nrcv) error("ERROR send() failed");
 
+		send_all(buffer);
+
 		/*char* eom = strchr(buffer, '\0');
 		if (eom != NULL) {
 			msg_done = 0;
