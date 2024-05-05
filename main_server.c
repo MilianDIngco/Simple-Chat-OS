@@ -217,13 +217,7 @@ void* thread_main(void* args)
 		for(int i = 0; i < num_clients; i++) {
 			if((strcmp(client_list[i].cli_username, username_d) == 0) && client_list[i].chat_room_no == *chat_no_d){
 				color_no = client_list[i].color;
-				printf("FOUDN");
 			}
-
-			if((strcmp(client_list[i].cli_username, username_d) == 0)) printf("USERNAME");
-			if(client_list[i].chat_room_no == *chat_no_d) printf("CHATROOM");
-			printf("client: %d\n", client_list[i].chat_room_no);
-			printf("usnm: %d\n", *chat_no_d);
 		}
 
 		// CREATE SERVER MESSAGE
@@ -290,12 +284,23 @@ int main(int argc, char** argv) {
 		int newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clen);
 		if (newsockfd < 0) error("ERROR on accept");
 
+		// get chatroom number
+		char chatroom_msg[MSG_BUFFER_SIZE];
 		//receive username
 		char username[USERNAME_SIZE];
 		memset(username, 0, USERNAME_SIZE);
-		int username_success = recv(newsockfd, username, USERNAME_SIZE, 0);
-		if (username_success < 0) error("ERROR failed to get username");
+		int* chat_no = (int*)malloc(sizeof(int));
+		char ip_addr[IP_SIZE];
+		int* message_id = (int*)malloc(sizeof(int));
+		int* message_order = (int*)malloc(sizeof(int));
+		char message[MSG_BUFFER_SIZE];
 
+		int chatroom_sucess = recv(newsockfd, chatroom_msg, MSG_BUFFER_SIZE, 0);
+		if (chatroom_sucess < 0) error ("ERROR failed to get username and chatroom no");
+		decode_client_message(username, chat_no, ip_addr, message_id, message_order, message, chatroom_msg);
+
+		printf("Username: %s Chatroom #: %d\n", username, *chat_no);
+		
 		//make new client
 		struct ClientInfo new_client;
 		int client_color;

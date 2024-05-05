@@ -12,6 +12,9 @@ USERNAME CANNOT INCLUDE [
 #include <netinet/in.h>
 #include <netdb.h> 
 #include <pthread.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <arpa/inet.h>
 
 #define PORT_NUM 10005
 #define USERNAME_SIZE 50
@@ -241,6 +244,7 @@ void* send_thread(void* args) {
 		// GET FULL MESSAGE	
 		printf("\033[0m"); //reset back to default
 		fgets(message, MSG_SIZE, stdin);
+		messages_sent++;
 
 		int msg_len = strlen(message);
 		int bytes_sent = 0; 
@@ -260,7 +264,7 @@ void* send_thread(void* args) {
 		char* username = client_username;
 		int chat_no = 0;
 		char* ip_addr = "127.0.0.1";
-		int message_id = 0;
+		int message_id = messages_sent;
 		int message_order = 0;
 		
 		create_client_message(f_msg, username, chat_no, ip_addr, message_id, message_order, message);
@@ -338,6 +342,14 @@ int main(int argc, char *argv[])
 			(struct sockaddr *) &serv_addr, slen);
 	if (status < 0) error("ERROR connecting");
 
+	char buffer[MSG_BUFFER_SIZE];
+	int n;
+		
+	//ask for username
+	printf("Please enter a username: ");
+	scanf("%s", client_username); //read user name
+	//add check is less than username size
+
 	char *room_arg = argv[2];
 	int room_no = 0;
 
@@ -351,22 +363,21 @@ int main(int argc, char *argv[])
 
 	char f_msg[MSG_BUFFER_SIZE];
     char ip_addr[IP_SIZE];
-    char message_id[7 + 1 + 1];
-    char message_order[7 + 1 + 1];
+    int message_id = messages_sent;
+    int message_order = 0;
 	char message[MSG_BUFFER_SIZE] = "chatroom_no";
 
+	// get ip addr
+	struct ifreq ifr;
+	char str[] = "eth0";
+	ifr.ifr_addr.sa_family = AF_INET;
+	strncpy(ifr.ifr_name , str, IFNAMSIZ - 1);
+	ioctl(sockfd, SIOCGIFADDR, &ifr);
+	sprintf(ip_addr, "%s", inet_ntoa(( (struct sockaddr_in *)&ifr.ifr_addr )->sin_addr));
+
 	create_client_message(f_msg, client_username, room_no, ip_addr, message_id, message_order, message);
+	// print_all(f_msg);
 	send(sockfd, f_msg, strlen(f_msg), 0);
-
-	char buffer[MSG_BUFFER_SIZE];
-	int n;
-		
-	//ask for username
-	printf("Please enter a username: ");
-	scanf("%s", client_username); //read user name
-	//add check is less than username size
-
-	send(sockfd, client_username, strlen(client_username), 0);
 
 	//clear input buffer
 	int c;

@@ -1,6 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <net/if.h>
 
 #define PORT_NUM 10004
 #define USERNAME_SIZE 50
@@ -330,62 +341,77 @@ void* thread_main(void* args)
 
 int main(int argc, char** argv) {
 
-    char f_msg[MSG_BUFFER_SIZE];
-    char* username = "DiyasBF";
-    int chat_no = 11;
-    char* ip_addr = "127.0.0.1";
-    int message_id = 1234;
-    int message_order = 0;
-    char* message = "omg diya urso hot and funny and i love you sm";
+    int n;
+    struct ifreq ifr;
+    char array[] = "eth0";
+ 
+    n = socket(AF_INET, SOCK_DGRAM, 0);
+    //Type of address to retrieve - IPv4 IP address
+    ifr.ifr_addr.sa_family = AF_INET;
+    //Copy the interface name in the ifreq structure
+    strncpy(ifr.ifr_name , array , IFNAMSIZ - 1);
+    ioctl(n, SIOCGIFADDR, &ifr);
+    close(n);
+    //display result
+    printf("IP Address is %s - %s\n" , array , inet_ntoa(( (struct sockaddr_in *)&ifr.ifr_addr )->sin_addr) );
 
-    create_client_message(f_msg, username, chat_no, ip_addr, message_id, message_order, message);
 
-    // printf("CLIENT MESSAGE\n");
-    // print_all(f_msg);
+//     char f_msg[MSG_BUFFER_SIZE];
+//     char* username = "DiyasBF";
+//     int chat_no = 11;
+//     char* ip_addr = "127.0.0.1";
+//     int message_id = 1234;
+//     int message_order = 0;
+//     char* message = "omg diya urso hot and funny and i love you sm";
 
-    char username_d[USERNAME_SIZE];
-    int* chat_no_d = (int*)malloc(sizeof(int));
-    char ip_addr_d[20 + 2 + 1];
-    int* message_id_d = (int*)malloc(sizeof(int));
-    int* message_order_d = (int*)malloc(sizeof(int));
-    char message_d[MSG_SIZE];
+//     create_client_message(f_msg, username, chat_no, ip_addr, message_id, message_order, message);
 
-   decode_client_message(username_d, chat_no_d, ip_addr_d, message_id_d, message_order_d, message_d, f_msg);
-   printf("\n");
+//     // printf("CLIENT MESSAGE\n");
+//     // print_all(f_msg);
+
+//     char username_d[USERNAME_SIZE];
+//     int* chat_no_d = (int*)malloc(sizeof(int));
+//     char ip_addr_d[20 + 2 + 1];
+//     int* message_id_d = (int*)malloc(sizeof(int));
+//     int* message_order_d = (int*)malloc(sizeof(int));
+//     char message_d[MSG_SIZE];
+
+//    decode_client_message(username_d, chat_no_d, ip_addr_d, message_id_d, message_order_d, message_d, f_msg);
+//    printf("\n");
     
-//    printf("MessageID: %d, Username: %s, chat_no: %d, IP: %s, Message_id: %d, Message_order: %d, Message: %s\n", *message_id_d, username_d, *chat_no_d, ip_addr_d, *message_id_d, *message_order_d, message_d);
+// //    printf("MessageID: %d, Username: %s, chat_no: %d, IP: %s, Message_id: %d, Message_order: %d, Message: %s\n", *message_id_d, username_d, *chat_no_d, ip_addr_d, *message_id_d, *message_order_d, message_d);
 
-    // add to msg q
-    add_message_queue(username_d, chat_no_d, ip_addr_d, message_id_d, message_d, message_order_d);
+//     // add to msg q
+//     add_message_queue(username_d, chat_no_d, ip_addr_d, message_id_d, message_d, message_order_d);
 
-    username = "DiyasBF";
-    chat_no = 11;
-    ip_addr = "127.0.0.1";
-    message_id = 1234;
-    message_order = 1;
-    message = "omggg girlfriend soo pretty";
+//     username = "DiyasBF";
+//     chat_no = 11;
+//     ip_addr = "127.0.0.1";
+//     message_id = 1234;
+//     message_order = 1;
+//     message = "omggg girlfriend soo pretty";
 
-    create_client_message(f_msg, username, chat_no, ip_addr, message_id, message_order, message);
+//     create_client_message(f_msg, username, chat_no, ip_addr, message_id, message_order, message);
 
-    char username_d_1[USERNAME_SIZE];
-    int* chat_no_d_1 = (int*)malloc(sizeof(int));
-    char ip_addr_d_1[20 + 2 + 1];
-    int* message_id_d_1 = (int*)malloc(sizeof(int));
-    int* message_order_d_1 = (int*)malloc(sizeof(int));
-    char message_d_1[MSG_SIZE];
+//     char username_d_1[USERNAME_SIZE];
+//     int* chat_no_d_1 = (int*)malloc(sizeof(int));
+//     char ip_addr_d_1[20 + 2 + 1];
+//     int* message_id_d_1 = (int*)malloc(sizeof(int));
+//     int* message_order_d_1 = (int*)malloc(sizeof(int));
+//     char message_d_1[MSG_SIZE];
 
-    decode_client_message(username_d_1, chat_no_d_1, ip_addr_d_1, message_id_d_1, message_order_d_1, message_d_1, f_msg);
+//     decode_client_message(username_d_1, chat_no_d_1, ip_addr_d_1, message_id_d_1, message_order_d_1, message_d_1, f_msg);
 
-    add_message_queue(username_d_1, chat_no_d_1, ip_addr_d_1, message_id_d_1, message_d_1, message_order_d_1);
+//     add_message_queue(username_d_1, chat_no_d_1, ip_addr_d_1, message_id_d_1, message_d_1, message_order_d_1);
 
-    for(int i = 0; i < num_msg; i++) {
-        Message* temp = msg_q[i];
-        while(temp != NULL) {
-            printf("Message Q: %s\n", temp->message);
-            temp = temp->next_msg;
-        }
-        printf("\nNEXTMSG\n");
-    }
+//     for(int i = 0; i < num_msg; i++) {
+//         Message* temp = msg_q[i];
+//         while(temp != NULL) {
+//             printf("Message Q: %s\n", temp->message);
+//             temp = temp->next_msg;
+//         }
+//         printf("\nNEXTMSG\n");
+//     }
 
     // printf("\nSERVER MESSAGE\n");
 
@@ -405,19 +431,19 @@ int main(int argc, char** argv) {
     // decode_server_message(username_d_s, ip_addr_d_s, color_no_d_s, message_d_s, f_msg);
     // printf("Username: %s, color_no: %d, IP: %s, Message: %s\n", username_d_s, *color_no_d_s, ip_addr_d_s, message_d_s);
     // free(color_no_d_s);
-    free(chat_no_d);
-    free(message_id_d);
-    free(message_order_d);
+    // free(chat_no_d);
+    // free(message_id_d);
+    // free(message_order_d);
 
-    for(int i = 0; i < num_msg; i++) {
-        Message* temp = msg_q[i];
-        while(temp != NULL) {
-            Message* temp2 = temp;
+    // for(int i = 0; i < num_msg; i++) {
+    //     Message* temp = msg_q[i];
+    //     while(temp != NULL) {
+    //         Message* temp2 = temp;
 
-            temp = temp2->next_msg;
-        }
-    }
-    free(msg_q);
+    //         temp = temp2->next_msg;
+    //     }
+    // }
+    // free(msg_q);
 
 
 
