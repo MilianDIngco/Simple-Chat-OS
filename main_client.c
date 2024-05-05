@@ -135,7 +135,19 @@ color_no int*
 message char*
 */
 void decode_server_message(char* username, char* ip_addr, int* color_no, char* message, char* f_msg) {
-    size_t f_msg_len = strlen(f_msg);
+    
+	// RECV
+	/*
+	char username_d_s[USERNAME_SIZE];
+    char ip_addr_d_s[20+2+1];
+    char message_d_s[MSG_SIZE];
+    int* color_no_d_s = (int*)malloc(sizeof(int));
+	*/
+	// DECODE SERVER MESSAGE
+	// Printf("coor thingy")
+	// printf("[%s]: %s", username, message)
+	
+	size_t f_msg_len = strlen(f_msg);
     char color_str[4];
     memset(color_str, 0, 4);
     // INT MAP 1: USERNAME, 2: COLOR_NO, 3: IP_ADDR, 4: MESSAGE, 0: SOMETHING WENT HORRIBLY WRONG

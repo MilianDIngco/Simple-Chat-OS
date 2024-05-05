@@ -331,22 +331,22 @@ int main(int argc, char** argv) {
 
     // printf("\nSERVER MESSAGE\n");
 
-    // char* username_s = "Diya!!";
-    // char* ip_addr_s = "127.0.0.2";
-    // int color_no_s = 16;
-    // char* message_s = "hello wow milian ur so cool and hot and silly fr";
-    // create_server_message(f_msg, username_s, ip_addr_s,color_no_s, message_s);
+    char* username_s = "Diya!!";
+    char* ip_addr_s = "127.0.0.2";
+    int color_no_s = 16;
+    char* message_s = "hello wow milian ur so cool and hot and silly fr";
+    create_server_message(f_msg, username_s, ip_addr_s,color_no_s, message_s);
 
-    // print_all(f_msg);
-    // printf("\n");
+    print_all(f_msg);
+    printf("\n");
 
-    // char username_d_s[USERNAME_SIZE];
-    // char ip_addr_d_s[20+2+1];
-    // char message_d_s[MSG_SIZE];
-    // int* color_no_d_s = (int*)malloc(sizeof(int));
-    // decode_server_message(username_d_s, ip_addr_d_s, color_no_d_s, message_d_s, f_msg);
-    // printf("Username: %s, color_no: %d, IP: %s, Message: %s\n", username_d_s, *color_no_d_s, ip_addr_d_s, message_d_s);
-    // free(color_no_d_s);
+    char username_d_s[USERNAME_SIZE];
+    char ip_addr_d_s[20+2+1];
+    char message_d_s[MSG_SIZE];
+    int* color_no_d_s = (int*)malloc(sizeof(int));
+    decode_server_message(username_d_s, ip_addr_d_s, color_no_d_s, message_d_s, f_msg);
+    printf("Username: %s, color_no: %d, IP: %s, Message: %s\n", username_d_s, *color_no_d_s, ip_addr_d_s, message_d_s);
+    free(color_no_d_s);
     free(chat_no_d);
 
     return 0;

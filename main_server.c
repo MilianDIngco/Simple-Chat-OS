@@ -180,10 +180,30 @@ void* thread_main(void* args)
 	// msg_done = 1 : message is already done
 	int msg_done = 0;
 
-	nrcv = recv(clisockfd, buffer, 256, 0);
+	nrcv = recv(clisockfd, buffer, MSG_BUFFER_SIZE, 0);
 	if (nrcv < 0) error("ERROR recv() failed");
 
 	while (nrcv > 0) {
+
+		// RECV()
+		/*
+		char username_d[USERNAME_SIZE];
+		int* chat_no_d = (int*)malloc(sizeof(int));
+		char ip_addr_d[20 + 2 + 1];
+		int* message_id_d = (int*)malloc(sizeof(int));
+		int* message_order_d = (int*)malloc(sizeof(int));
+		char message_d[MSG_SIZE];
+		*/
+		// DECODE CLIENT MESSAGE
+		// CREATE SERVER MESSAGE
+		/* PASSES
+		username
+		ip_addr
+		color_no
+
+		*/
+
+
 		nsen = send(clisockfd, buffer, nrcv, 0);
 		if (nsen != nrcv) error("ERROR send() failed");
 
@@ -277,5 +297,17 @@ int main(int argc, char** argv) {
 		if (pthread_create(&tid, NULL, thread_main, (void*) args) != 0) error("ERROR creating a new thread");
 	}
 
+
+	char username_d[USERNAME_SIZE];
+    int* chat_no_d = (int*)malloc(sizeof(int));
+    char ip_addr_d[20 + 2 + 1];
+    int* message_id_d = (int*)malloc(sizeof(int));
+    int* message_order_d = (int*)malloc(sizeof(int));
+    char message_d[MSG_SIZE];
+	decode_client_message(ytra;dptnrdpuian)
+
+
+
     return 0;
 }
+
