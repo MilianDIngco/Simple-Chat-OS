@@ -355,9 +355,9 @@ int main(int argc, char *argv[])
 	if(strcmp(room_arg, "new") == 0){
 		//user wants new room
 		chatroom_no = -1; //indicates new room
-	}else if(strcmp(room_arg, "") == 0){
-		printf("\033[1mServer Says the following options are available:\033[1m");
-	}
+	}//else if(strcmp(room_arg, "") == 0){
+		//printf("\033[1mServer Says the following options are available:\033[1m");
+	//}
 	else{
 		//user wants to join specific chat room
 		chatroom_no = atoi(room_arg);
