@@ -280,9 +280,17 @@ int main(int argc, char** argv) {
 		//make new client
 		struct ClientInfo new_client;
 		int client_color;
+		int color_count = 0;
 		do{ //know y'all haven't seen a do while in a hot second
-			client_color = rand() % 16; //random number between 0 - 15
-			printf("Client Color: %d\n", client_color);
+			color_count++;
+			if(color_count >= 16){
+				//all colors have been used, must print error message;
+				printf("Error: All available colors have been used.\n");
+				exit(1);
+			}
+			else{
+				client_color = rand() % 16; //random number between 0 - 15
+			}
 		} while(used_Color[client_color]); //will loop again if index is used
 		used_Color[client_color] = 1; //mark as used
 		new_client.color = color_Print[client_color];
