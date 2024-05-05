@@ -21,7 +21,7 @@
 //--------------- COLOR ARRAY T-T ------------------------------
 //static array for colors to print
 static int color_Print[16] = {7, 8, 52, 1, 166, 214, 3, 2, 22, 6, 117, 26, 12, 99, 219, 205};
-int used_Color[16]; //used to determine if a corresponding color was used
+int used_Color[16] = {0}; //used to determine if a corresponding color was used
 //printf("\033[38;5;%dm", i);
 
 //--------------- STRUCTS ;D -----------------------------------
@@ -274,9 +274,10 @@ int main(int argc, char** argv) {
 
 		//make new client
 		struct ClientInfo new_client;
-		int client_color = rand() % 16;
+		int client_color;
 		do{ //know y'all haven't seen a do while in a hot second
-			client_color++; //random number between 0 - 15
+			client_color = rand() % 16; //random number between 0 - 15
+			printf("Client Color: %d\n", client_color);
 		} while(used_Color[client_color]); //will loop again if index is used
 		used_Color[client_color] = 1; //mark as used
 		new_client.color = color_Print[client_color];
