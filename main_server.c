@@ -33,7 +33,8 @@ typedef struct _ThreadArgs {
 //structure to define client info for each unique client
 typedef struct ClientInfo{
 	char cli_username[USERNAME_SIZE]; //username
-	int clisockfd; //for ip addr
+	int clisockfd;
+	int cli_ip_iddr; //ip addr
 	int chat_room_no; //what chat room they're in
 	int color; //color of their text
 } ClientInfo;
@@ -180,28 +181,35 @@ void* thread_main(void* args)
 	// msg_done = 1 : message is already done
 	int msg_done = 0;
 
-	nrcv = recv(clisockfd, buffer, MSG_BUFFER_SIZE, 0);
-	if (nrcv < 0) error("ERROR recv() failed");
 
-	while (nrcv > 0) {
-
+	do {
 		// RECV()
-		/*
+		nrcv = recv(clisockfd, buffer, MSG_BUFFER_SIZE, 0);
+		if (nrcv < 0) error("ERROR recv() failed");
+	
+		//vars for decoding client_message
 		char username_d[USERNAME_SIZE];
 		int* chat_no_d = (int*)malloc(sizeof(int));
 		char ip_addr_d[20 + 2 + 1];
 		int* message_id_d = (int*)malloc(sizeof(int));
 		int* message_order_d = (int*)malloc(sizeof(int));
-		char message_d[MSG_SIZE];
-		*/
-		// DECODE CLIENT MESSAGE
-		// CREATE SERVER MESSAGE
-		/* PASSES
-		username
-		ip_addr
-		color_no
+		char message_d[MSG_BUFFER_SIZE];
+		char f_msg[MSG_BUFFER_SIZE];
 
-		*/
+
+		// DECODE CLIENT MESSAGE
+		decode_client_message(username_d, chat_no_d, ip_addr_d, message_id_d, message_order_d, message_d, f_msg);
+
+		int color_no; //preparing to send color for client
+		for(int i = 0; i < num_clients; i++) {
+			if((strcmp(client_list[i].cli_username, username_d) == 0) && (strcmp(client_list[i].cli_ip_iddr, ip_addr_d))){
+				color_no = client_list[i].color;
+			}
+		}
+
+		// CREATE SERVER MESSAGE
+		create_server_message(f_msg, username_d, ip_addr_d, color_no, message_d);
+
 
 
 		nsen = send(clisockfd, buffer, nrcv, 0);
@@ -217,7 +225,7 @@ void* thread_main(void* args)
 		}*/
 		if (strlen(buffer) == 0 /*&& msg_done == 1*/) break;
 		if (nrcv < 0) error("ERROR recv() failed thread");
-	}
+	} while (nrcv > 0);
 
 	send_all("A user has left");
 	close(clisockfd);
@@ -271,10 +279,11 @@ int main(int argc, char** argv) {
 			client_color++; //random number between 0 - 15
 		} while(used_Color[client_color]); //will loop again if index is used
 		used_Color[client_color] = 1; //mark as used
-		new_client.color = client_color;
+		new_client.color = color_Print[client_color];
 
 		strncpy(new_client.cli_username, username, sizeof(new_client.cli_username));
 		new_client.clisockfd = newsockfd; //ip addr
+		new_client.cli_ip_iddr = inet_ntoa(cli_addr.sin_addr);
 		//new_client.chat_room_no = room_no; //which chat room they're in
 		//append client to list
 		client_list[num_clients++] = new_client;
@@ -296,17 +305,6 @@ int main(int argc, char** argv) {
 		pthread_t tid;
 		if (pthread_create(&tid, NULL, thread_main, (void*) args) != 0) error("ERROR creating a new thread");
 	}
-
-
-	char username_d[USERNAME_SIZE];
-    int* chat_no_d = (int*)malloc(sizeof(int));
-    char ip_addr_d[20 + 2 + 1];
-    int* message_id_d = (int*)malloc(sizeof(int));
-    int* message_order_d = (int*)malloc(sizeof(int));
-    char message_d[MSG_SIZE];
-	decode_client_message(ytra;dptnrdpuian)
-
-
 
     return 0;
 }

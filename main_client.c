@@ -135,18 +135,6 @@ color_no int*
 message char*
 */
 void decode_server_message(char* username, char* ip_addr, int* color_no, char* message, char* f_msg) {
-    
-	// RECV
-	/*
-	char username_d_s[USERNAME_SIZE];
-    char ip_addr_d_s[20+2+1];
-    char message_d_s[MSG_SIZE];
-    int* color_no_d_s = (int*)malloc(sizeof(int));
-	*/
-	// DECODE SERVER MESSAGE
-	// Printf("coor thingy")
-	// printf("[%s]: %s", username, message)
-	
 	size_t f_msg_len = strlen(f_msg);
     char color_str[4];
     memset(color_str, 0, 4);
@@ -193,7 +181,17 @@ void* recv_thread(void* args) {
 
 	do {
 		memset(buffer, 0, MSG_BUFFER_SIZE);
-        nrcv = recv(sockfd, buffer, MSG_BUFFER_SIZE, 0);
+        nrcv = recv(sockfd, buffer, MSG_BUFFER_SIZE, 0); // RECV
+
+		char username_d_s[USERNAME_SIZE];
+		char ip_addr_d_s[20+2+1];
+		char message_d_s[MSG_BUFFER_SIZE];
+		int* color_no_d_s = (int*)malloc(sizeof(int));
+		char f_msg[MSG_BUFFER_SIZE];
+
+		// DECODE SERVER MESSAGE
+		decode_server_message(username_d_s, ip_addr_d_s, color_no_d_s, message_d_s, f_msg);
+
 		buffer[MSG_BUFFER_SIZE] = '\0';
 		total_nrcv += nrcv;
         if (strlen(buffer) == 0) break;
@@ -208,6 +206,7 @@ void* recv_thread(void* args) {
 		// check if message contains end character
 		char* eom = strchr(buffer, END_MSG);
 		if (eom != NULL) {
+			printf("\033[38;5;%dm", color_no_d_s); //switch color before message
 			printf("\nSERVER: %s\n", message);
 			total_nrcv = 0;
 			memset(message, 0, MSG_SIZE);
