@@ -34,7 +34,7 @@ typedef struct _ThreadArgs {
 typedef struct ClientInfo{
 	char cli_username[USERNAME_SIZE]; //username
 	int clisockfd;
-	int cli_ip_iddr; //ip addr
+	char cli_ip_iddr[IP_SIZE]; //ip addr
 	int chat_room_no; //what chat room they're in
 	int color; //color of their text
 } ClientInfo;
