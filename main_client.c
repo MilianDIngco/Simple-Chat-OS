@@ -13,7 +13,7 @@ USERNAME CANNOT INCLUDE [
 #include <netdb.h> 
 #include <pthread.h>
 
-#define PORT_NUM 10004
+#define PORT_NUM 10005
 #define USERNAME_SIZE 50
 #define MSG_BUFFER_SIZE 256
 #define MSG_SIZE 65536
@@ -141,6 +141,9 @@ void decode_server_message(char* username, char* ip_addr, int* color_no, char* m
 	size_t f_msg_len = strlen(f_msg);
     char color_str[4];
     memset(color_str, 0, 4);
+	memset(username, 0, USERNAME_SIZE);
+	memset(ip_addr, 0, IP_SIZE);
+	memset(message, 0, MSG_BUFFER_SIZE);
     // INT MAP 1: USERNAME, 2: COLOR_NO, 3: IP_ADDR, 4: MESSAGE, 0: SOMETHING WENT HORRIBLY WRONG
     int map = 0;
     // counter map 1: USERNAME, 2: COLOR_NO, 3: IP_ADDR
@@ -190,7 +193,7 @@ void* recv_thread(void* args) {
 		char ip_addr_d_s[20+2+1];
 		char message_d_s[MSG_BUFFER_SIZE];
 		int* color_no_d_s = (int*)malloc(sizeof(int));
-		char f_msg[MSG_BUFFER_SIZE];
+		// char f_msg[MSG_BUFFER_SIZE];
 
 		// DECODE SERVER MESSAGE
 		decode_server_message(username_d_s, ip_addr_d_s, color_no_d_s, message_d_s, buffer);
@@ -211,7 +214,7 @@ void* recv_thread(void* args) {
 		if (eom != NULL) {
 			printf("Color is: %d", *color_no_d_s);
 			printf("\033[38;5;%dm", *color_no_d_s); //switch color before message
-			printf("\n[%s] %s\n", username_d_s, message);
+			printf("\n[%s (%s)] %s\n", username_d_s, ip_addr_d_s, message_d_s);
 			total_nrcv = 0;
 			memset(message, 0, MSG_SIZE);
 		}
@@ -260,9 +263,8 @@ void* send_thread(void* args) {
 		
 		create_client_message(f_msg, username, chat_no, ip_addr, message_id, message_order, message);
 
-		print_all(f_msg);
-
 		send(sockfd, f_msg, strlen(f_msg), 0);
+		printf("sent");
 
 		/*
 		while (bytes_sent < msg_len + 1) 
@@ -306,7 +308,7 @@ void* send_thread(void* args) {
 		} */
 	}	
 
-        close(sockfd);
+    close(sockfd);
 	client_leave = 1;
 
 	return NULL;

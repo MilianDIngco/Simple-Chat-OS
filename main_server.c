@@ -7,8 +7,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <time.h>
 
-#define PORT_NUM 10004
+#define PORT_NUM 10005
 #define USERNAME_SIZE 50
 #define MSG_BUFFER_SIZE 256
 #define MAX_CLIENTS 16
@@ -21,7 +22,7 @@
 //--------------- COLOR ARRAY T-T ------------------------------
 //static array for colors to print
 static int color_Print[16] = {7, 8, 52, 1, 166, 214, 3, 2, 22, 6, 117, 26, 12, 99, 219, 205};
-int used_Color[16] = {0}; //used to determine if a corresponding color was used
+int used_Color[16] = { 0 }; //used to determine if a corresponding color was used
 //printf("\033[38;5;%dm", i);
 
 //--------------- STRUCTS ;D -----------------------------------
@@ -71,6 +72,9 @@ void decode_client_message(char* username, int* chat_no, char* ip_addr, int* mes
     memset(chat_str, 0, 3);
     memset(message_id_str, 0, 7);
     memset(message_order_str, 0, 7);
+	memset(username, 0, USERNAME_SIZE);
+	memset(ip_addr, 0, IP_SIZE);
+	memset(message, 0, MSG_BUFFER_SIZE);
     // INT MAP 1: USERNAME, 2: CHAT_NO, 3: IP_ADDR,  4: message_id, 5: message_order, 6: MESSAGE, 0: SOMETHING WENT HORRIBLY WRONG
     int map = 0;
     // counter map 1: USERNAME, 2: CHAT_NO, 3: IP_ADDR, 4: MESSAGE_ID, 5: MESSAGE_ORDER
@@ -181,9 +185,9 @@ void* thread_main(void* args)
 	// msg_done = 1 : message is already done
 	int msg_done = 0;
 
-
 	do {
 		// RECV()
+		memset(buffer, 0, MSG_BUFFER_SIZE);
 		nrcv = recv(clisockfd, buffer, MSG_BUFFER_SIZE, 0);
 		if (nrcv < 0) error("ERROR recv() failed");
 	
@@ -194,29 +198,28 @@ void* thread_main(void* args)
 		int* message_id_d = (int*)malloc(sizeof(int));
 		int* message_order_d = (int*)malloc(sizeof(int));
 		//char message_d[MSG_BUFFER_SIZE];
-		char f_msg[MSG_BUFFER_SIZE];
-
+		char msg_d[MSG_BUFFER_SIZE];
 
 		// DECODE CLIENT MESSAGE
-		decode_client_message(username_d, chat_no_d, ip_addr_d, message_id_d, message_order_d, buffer, f_msg);
+		decode_client_message(username_d, chat_no_d, ip_addr_d, message_id_d, message_order_d, msg_d, buffer);
 
 		int color_no; //preparing to send color for client
 		for(int i = 0; i < num_clients; i++) {
 			if((strcmp(client_list[i].cli_username, username_d) == 0) && (strcmp(client_list[i].cli_ip_iddr, ip_addr_d))){
 				color_no = client_list[i].color;
+				printf("FOUND COLOR\n");
 			}
+			printf("client: %s\n", client_list[i].cli_username);
+			printf("usnm: %s\n", username_d);
 		}
 
 		// CREATE SERVER MESSAGE
-		create_server_message(f_msg, username_d, ip_addr_d, color_no, buffer);
-
-
+		memset(buffer, 0, MSG_BUFFER_SIZE);
+		create_server_message(buffer, username_d, ip_addr_d, color_no, msg_d);
 
 		nsen = send(clisockfd, buffer, nrcv, 0);
 		if (nsen != nrcv) error("ERROR send() failed");
 
-		memset(buffer, 0, MSG_BUFFER_SIZE);
-		nrcv = recv(clisockfd, buffer, MSG_BUFFER_SIZE, 0);
 		/*char* eom = strchr(buffer, '\0');
 		if (eom != NULL) {
 			msg_done = 0;
