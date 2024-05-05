@@ -135,6 +135,10 @@ void decode_client_message(char* username, int* chat_no, char* ip_addr, int* mes
     memset(chat_str, 0, 3);
     memset(message_id_str, 0, 7);
     memset(message_order_str, 0, 7);
+    memset(username, 0, USERNAME_SIZE);
+    memset(ip_addr, 0, IP_SIZE);
+    memset(message, 0, MSG_BUFFER_SIZE);
+
     // INT MAP 1: USERNAME, 2: CHAT_NO, 3: IP_ADDR,  4: message_id, 5: message_order, 6: MESSAGE, 0: SOMETHING WENT HORRIBLY WRONG
     int map = 0;
     // counter map 1: USERNAME, 2: CHAT_NO, 3: IP_ADDR, 4: MESSAGE_ID, 5: MESSAGE_ORDER
@@ -232,7 +236,7 @@ void decode_server_message(char* username, char* ip_addr, int* color_no, char* m
     *color_no = atoi(color_str); 
 }
 
-void add_message_queue(char* username, int* chat_no, char* ip_addr, int* message_id, char* message, int message_order) {
+void add_message_queue(char* username, int* chat_no, char* ip_addr, int* message_id, char* message, int* message_order) {
     // creates message node
     struct Message* tempMsg = (Message*)malloc(sizeof(Message));
     strcpy(tempMsg->message, message);
@@ -240,15 +244,39 @@ void add_message_queue(char* username, int* chat_no, char* ip_addr, int* message
     tempMsg->chat_no = *chat_no;
     strcpy(tempMsg->ip_addr, ip_addr);
     tempMsg->message_id = *message_id;
+    tempMsg->next_msg = NULL;
 
     // search through message list to see
     if (msg_q == NULL) {
         msg_q = (Message**)malloc(sizeof(Message*) * MAX_MSG_Q);
         msg_q[0] = tempMsg;
+        num_msg = 1;
     } else {
+        int found = -1;
         for(int i = 0; i < num_msg; i++) {
-            printf("hoy");
+            if((msg_q[i]->message_id == tempMsg->message_id) && (msg_q[i]->chat_no == tempMsg->chat_no) && (strcmp(msg_q[i]->username, tempMsg->username) == 0)) {
+                found = i;
+                break;
+            }
         }
+
+        if(found >= 0) {
+            Message* temp = msg_q[found];
+            while(temp->next_msg != NULL) {
+                temp = temp->next_msg;
+            }
+            temp->next_msg = tempMsg;
+        } else {
+            // linear search thru array to find empty spot
+            for(int i = 0; i < MAX_MSG_Q; i++) {
+                if(msg_q[i] == NULL) {
+                    msg_q[i] = tempMsg;
+                    break;
+                }
+            }
+            num_msg++;
+        }
+
     }
 }
 
@@ -307,13 +335,13 @@ int main(int argc, char** argv) {
     int chat_no = 11;
     char* ip_addr = "127.0.0.1";
     int message_id = 1234;
-    int message_order = 123;
+    int message_order = 0;
     char* message = "omg diya urso hot and funny and i love you sm";
 
     create_client_message(f_msg, username, chat_no, ip_addr, message_id, message_order, message);
 
-    printf("CLIENT MESSAGE\n");
-    print_all(f_msg);
+    // printf("CLIENT MESSAGE\n");
+    // print_all(f_msg);
 
     char username_d[USERNAME_SIZE];
     int* chat_no_d = (int*)malloc(sizeof(int));
@@ -325,29 +353,73 @@ int main(int argc, char** argv) {
    decode_client_message(username_d, chat_no_d, ip_addr_d, message_id_d, message_order_d, message_d, f_msg);
    printf("\n");
     
-   printf("MessageID: %d, Username: %s, chat_no: %d, IP: %s, Message_id: %d, Message_order: %d, Message: %s\n", *message_id_d, username_d, *chat_no_d, ip_addr_d, *message_id_d, *message_order_d, message_d);
+//    printf("MessageID: %d, Username: %s, chat_no: %d, IP: %s, Message_id: %d, Message_order: %d, Message: %s\n", *message_id_d, username_d, *chat_no_d, ip_addr_d, *message_id_d, *message_order_d, message_d);
 
+    // add to msg q
+    add_message_queue(username_d, chat_no_d, ip_addr_d, message_id_d, message_d, message_order_d);
 
+    username = "DiyasBF";
+    chat_no = 11;
+    ip_addr = "127.0.0.1";
+    message_id = 1234;
+    message_order = 1;
+    message = "omggg girlfriend soo pretty";
+
+    create_client_message(f_msg, username, chat_no, ip_addr, message_id, message_order, message);
+
+    char username_d_1[USERNAME_SIZE];
+    int* chat_no_d_1 = (int*)malloc(sizeof(int));
+    char ip_addr_d_1[20 + 2 + 1];
+    int* message_id_d_1 = (int*)malloc(sizeof(int));
+    int* message_order_d_1 = (int*)malloc(sizeof(int));
+    char message_d_1[MSG_SIZE];
+
+    decode_client_message(username_d_1, chat_no_d_1, ip_addr_d_1, message_id_d_1, message_order_d_1, message_d_1, f_msg);
+
+    add_message_queue(username_d_1, chat_no_d_1, ip_addr_d_1, message_id_d_1, message_d_1, message_order_d_1);
+
+    for(int i = 0; i < num_msg; i++) {
+        Message* temp = msg_q[i];
+        while(temp != NULL) {
+            printf("Message Q: %s\n", temp->message);
+            temp = temp->next_msg;
+        }
+        printf("\nNEXTMSG\n");
+    }
 
     // printf("\nSERVER MESSAGE\n");
 
-    char* username_s = "Diya!!";
-    char* ip_addr_s = "127.0.0.2";
-    int color_no_s = 16;
-    char* message_s = "hello wow milian ur so cool and hot and silly fr";
-    create_server_message(f_msg, username_s, ip_addr_s,color_no_s, message_s);
+    // char* username_s = "Diya!!";
+    // char* ip_addr_s = "127.0.0.2";
+    // int color_no_s = 16;
+    // char* message_s = "hello wow milian ur so cool and hot and silly fr";
+    // create_server_message(f_msg, username_s, ip_addr_s,color_no_s, message_s);
 
-    print_all(f_msg);
-    printf("\n");
+    // print_all(f_msg);
+    // printf("\n");
 
-    char username_d_s[USERNAME_SIZE];
-    char ip_addr_d_s[20+2+1];
-    char message_d_s[MSG_SIZE];
-    int* color_no_d_s = (int*)malloc(sizeof(int));
-    decode_server_message(username_d_s, ip_addr_d_s, color_no_d_s, message_d_s, f_msg);
-    printf("Username: %s, color_no: %d, IP: %s, Message: %s\n", username_d_s, *color_no_d_s, ip_addr_d_s, message_d_s);
-    free(color_no_d_s);
+    // char username_d_s[USERNAME_SIZE];
+    // char ip_addr_d_s[20+2+1];
+    // char message_d_s[MSG_SIZE];
+    // int* color_no_d_s = (int*)malloc(sizeof(int));
+    // decode_server_message(username_d_s, ip_addr_d_s, color_no_d_s, message_d_s, f_msg);
+    // printf("Username: %s, color_no: %d, IP: %s, Message: %s\n", username_d_s, *color_no_d_s, ip_addr_d_s, message_d_s);
+    // free(color_no_d_s);
     free(chat_no_d);
+    free(message_id_d);
+    free(message_order_d);
+
+    for(int i = 0; i < num_msg; i++) {
+        Message* temp = msg_q[i];
+        while(temp != NULL) {
+            Message* temp2 = temp;
+
+            temp = temp2->next_msg;
+        }
+    }
+    free(msg_q);
+
+
 
     return 0;
 }
