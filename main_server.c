@@ -205,7 +205,7 @@ void* thread_main(void* args)
 
 		int color_no; //preparing to send color for client
 		for(int i = 0; i < num_clients; i++) {
-			if((strcmp(client_list[i].cli_username, username_d) == 0) && (strcmp(client_list[i].cli_ip_iddr, ip_addr_d))){
+			if((strcmp(client_list[i].cli_username, username_d) == 0)){
 				color_no = client_list[i].color;
 				printf("FOUND COLOR\n");
 			}
