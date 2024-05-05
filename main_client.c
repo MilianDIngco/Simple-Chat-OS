@@ -317,7 +317,7 @@ void* send_thread(void* args) {
 
 int main(int argc, char *argv[])
 {
-	if (argc < 2) error("Please speicify hostname");
+	if (argc < 3) error("Please specify hostname & chat room");
 
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd < 0) error("ERROR opening socket");
@@ -337,6 +337,26 @@ int main(int argc, char *argv[])
 	int status = connect(sockfd, 
 			(struct sockaddr *) &serv_addr, slen);
 	if (status < 0) error("ERROR connecting");
+
+	char *room_arg = argv[2];
+	int room_no = 0;
+
+	if(strcmp(room_arg, "new") == 0){
+		//user wants new room
+		room_no = -1; //indicates new room
+	}else{
+		//user wants to join specific chat room
+		room_no = atoi(room_arg);
+	}
+
+	char f_msg[MSG_BUFFER_SIZE];
+    char ip_addr[IP_SIZE];
+    char message_id[7 + 1 + 1];
+    char message_order[7 + 1 + 1];
+	char message[MSG_BUFFER_SIZE] = "chatroom_no";
+
+	create_client_message(f_msg, client_username, room_no, ip_addr, message_id, message_order, message);
+	send(sockfd, f_msg, strlen(f_msg), 0);
 
 	char buffer[MSG_BUFFER_SIZE];
 	int n;
