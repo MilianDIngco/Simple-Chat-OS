@@ -29,6 +29,9 @@ int used_Color[16] = { 0 }; //used to determine if a corresponding color was use
 
 typedef struct _ThreadArgs {
 	int clisockfd;
+	char username_thread[USERNAME_SIZE];
+	char ip_thread[IP_SIZE];
+	int chatroom_no;
 } ThreadArgs; //what
 
 //structure to define client info for each unique client
@@ -151,6 +154,16 @@ void send_all(const char *msg)
 	}
 }
 
+void clear_name(char* username, int chatroom_no, char* ip_thread) {
+	for(int i = 0; i < MAX_CLIENTS; i++) {
+		if(strcmp(client_list[i].cli_username, username) == 0 && strcmp(client_list[i].cli_ip_iddr, ip_thread) && client_list[i].chat_room_no == chatroom_no) {
+			memset(client_list[i].cli_username, 0, strlen(client_list[i].cli_username));
+			memset(client_list[i].cli_ip_iddr, 0, strlen(client_list[i].cli_ip_iddr));
+			client_list[i].chat_room_no = -1;
+		}
+	}
+}
+
 void* thread_main(void* args)
 {
 	// make sure thread resources are deallocated upon return
@@ -158,6 +171,9 @@ void* thread_main(void* args)
 
 	// get socket descriptor from argument
 	int clisockfd = ((ThreadArgs*) args)->clisockfd;
+	char* username_thread = strdup(((ThreadArgs*) args)->username_thread);
+	int chatroom_no = ((ThreadArgs*) args)->chatroom_no;
+	char* ip_thread = strdup(((ThreadArgs*) args)->ip_thread);
 	free(args);
 
 	//-------------------------------
@@ -174,7 +190,11 @@ void* thread_main(void* args)
 		memset(buffer, 0, MSG_BUFFER_SIZE);
 		nrcv = recv(clisockfd, buffer, MSG_BUFFER_SIZE, 0);
 		if (nrcv < 0) error("ERROR recv() failed");
-	
+
+		if(buffer[0] == '\0') {
+			break;
+		}
+
 		//vars for decoding client_message
 		char username_d[USERNAME_SIZE];
 		int* chat_no_d = (int*)malloc(sizeof(int));
@@ -214,7 +234,14 @@ void* thread_main(void* args)
 
 	close(clisockfd);
 	num_clients--;
-	send_all("A user has left");
+
+	char bye_msg[MSG_BUFFER_SIZE];
+	char* bye_str = " has left the chat room!";
+
+	create_server_message(bye_msg, username_thread, ip_thread, 0, bye_str);
+	send_all(bye_msg);
+
+	clear_name(username_thread, chatroom_no, ip_thread);
 	
 	return NULL;
 }
@@ -294,9 +321,19 @@ int main(int argc, char** argv) {
 		if (args == NULL) error("ERROR creating thread argument");
 				
 		args->clisockfd = newsockfd;
+		strcpy(args->username_thread, username);
+		args->chatroom_no = 0;
+		strcpy(args->ip_thread, inet_ntoa(cli_addr.sin_addr));
 
 		pthread_t tid;
 		if (pthread_create(&tid, NULL, thread_main, (void*) args) != 0) error("ERROR creating a new thread");
+
+		// print welcome message
+		char welcome_message[MSG_BUFFER_SIZE];
+		char* welcome_str = " joined the chat room!";
+
+		create_server_message(welcome_message, username, inet_ntoa(cli_addr.sin_addr), 0, welcome_str);
+		send_all(welcome_message);
 	}
 
     return 0;
