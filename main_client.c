@@ -212,7 +212,6 @@ void* recv_thread(void* args) {
 		// check if message contains end character
 		char* eom = strchr(buffer, END_MSG);
 		if (eom != NULL) {
-			printf("Color is: %d", *color_no_d_s);
 			printf("\033[38;5;%dm", *color_no_d_s); //switch color before message
 			printf("\n[%s (%s)] %s\n", username_d_s, ip_addr_d_s, message_d_s);
 			printf("\033[0m"); //reset back to default
