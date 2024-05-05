@@ -110,7 +110,7 @@ void decode_client_message(char* username, int* chat_no, char* ip_addr, int* mes
 Takes an empty string that will hold the generated server message string
 Takes a username parameter, ip address, color number, and message
 */
-void create_server_message(char* f_msg, char* username, char* ip_addr, int color_no, char* message, int include_user_info) {
+void create_server_message(char* f_msg, char* username, char* ip_addr, int color_no, char* message) {
     memset(f_msg, 0, MSG_BUFFER_SIZE);
     // format strings to have brackets surrounding them
 
@@ -129,21 +129,15 @@ void create_server_message(char* f_msg, char* username, char* ip_addr, int color
     size_t chat_no_len = strlen(b_color_no);
 
     // START HEADER
-	if(include_user_info){
-		f_msg[0] = HEADER_MSG;
+	f_msg[0] = HEADER_MSG;
+	strcat(f_msg, b_username);
+	strcat(f_msg, b_color_no);
+	strcat(f_msg, b_ip_addr);
 
-		strcat(f_msg, b_username);
-		
-		strcat(f_msg, b_color_no);
-
-		strcat(f_msg, b_ip_addr);
-	}
     // START MESSAGE
 
     strcat(f_msg, "\x02");
-
     strcat(f_msg, message);
-
     strcat(f_msg, "\x03");
 }
 
@@ -214,7 +208,7 @@ void* thread_main(void* args)
 
 		// CREATE SERVER MESSAGE
 		memset(buffer, 0, MSG_BUFFER_SIZE);
-		create_server_message(buffer, username_d, ip_addr_d, color_no, msg_d, 1);
+		create_server_message(buffer, username_d, ip_addr_d, color_no, msg_d);
 
 		nsen = send(clisockfd, buffer, nrcv, 0);
 		if (nsen != nrcv) error("ERROR send() failed");
