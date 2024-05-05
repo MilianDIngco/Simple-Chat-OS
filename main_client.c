@@ -238,6 +238,7 @@ void* send_thread(void* args) {
 
 	while (1) {
 		// GET FULL MESSAGE	
+		printf("\033[0m"); //reset back to default
 		fgets(message, MSG_SIZE, stdin);
 
 		int msg_len = strlen(message);
@@ -264,7 +265,6 @@ void* send_thread(void* args) {
 		create_client_message(f_msg, username, chat_no, ip_addr, message_id, message_order, message);
 
 		send(sockfd, f_msg, strlen(f_msg), 0);
-		printf("sent");
 
 		/*
 		while (bytes_sent < msg_len + 1) 

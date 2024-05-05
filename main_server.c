@@ -144,19 +144,9 @@ void create_server_message(char* f_msg, char* username, char* ip_addr, int color
 void send_all(const char *msg)
 {
 	char buffer[MSG_BUFFER_SIZE];
-	for(int i = 0; i < num_clients; i++) {
-		int msg_len = strlen(msg);
-		// calculates number of times will need to send() for buffer size
-		int num_sends = msg_len / MSG_BUFFER_SIZE + ((msg_len == MSG_BUFFER_SIZE) ? 0 : 1);
-		for(int n = 0; n < num_sends; n++) {
-			// gets client fd
-			int client_fd = client_list[i].clisockfd;
-			
-			//copy 256 bytes into buffer
-			memset(buffer, 0, MSG_BUFFER_SIZE);	
-			memcpy(buffer, msg + (n * MSG_BUFFER_SIZE), MSG_BUFFER_SIZE);
-			//sends message to clients
-			send(client_fd, buffer, ((n == num_sends - 1) ? msg_len % MSG_BUFFER_SIZE : MSG_BUFFER_SIZE), 0);
+	for(int i = 0; i < MAX_CLIENTS; i++) {
+		if(client_list[i].cli_username != NULL) {
+			send(client_list[i].clisockfd, msg, MSG_BUFFER_SIZE, 0);
 		}
 	}
 }
@@ -199,19 +189,16 @@ void* thread_main(void* args)
 
 		int color_no; //preparing to send color for client
 		for(int i = 0; i < num_clients; i++) {
-			if((strcmp(client_list[i].cli_username, username_d) == 0)){
+			if((strcmp(client_list[i].cli_username, username_d) == 0) && client_list[i].chat_room_no == *chat_no_d){
 				color_no = client_list[i].color;
 			}
-			printf("client: %s\n", client_list[i].cli_username);
-			printf("usnm: %s\n", username_d);
+			// printf("client: %s\n", client_list[i].cli_username);
+			// printf("usnm: %s\n", username_d);
 		}
 
 		// CREATE SERVER MESSAGE
 		memset(buffer, 0, MSG_BUFFER_SIZE);
 		create_server_message(buffer, username_d, ip_addr_d, color_no, msg_d);
-
-		nsen = send(clisockfd, buffer, nrcv, 0);
-		if (nsen != nrcv) error("ERROR send() failed");
 
 		send_all(buffer);
 
@@ -225,11 +212,10 @@ void* thread_main(void* args)
 		if (nrcv < 0) error("ERROR recv() failed thread");
 	} while (nrcv > 0);
 
-	send_all("A user has left");
 	close(clisockfd);
 	num_clients--;
-	//-------------------------------
-
+	send_all("A user has left");
+	
 	return NULL;
 }
 
