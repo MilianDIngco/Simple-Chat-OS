@@ -217,9 +217,13 @@ void* thread_main(void* args)
 		for(int i = 0; i < num_clients; i++) {
 			if((strcmp(client_list[i].cli_username, username_d) == 0) && client_list[i].chat_room_no == *chat_no_d){
 				color_no = client_list[i].color;
+				printf("FOUDN");
 			}
-			// printf("client: %s\n", client_list[i].cli_username);
-			// printf("usnm: %s\n", username_d);
+
+			if((strcmp(client_list[i].cli_username, username_d) == 0)) printf("USERNAME");
+			if(client_list[i].chat_room_no == *chat_no_d) printf("CHATROOM");
+			printf("client: %d\n", client_list[i].chat_room_no);
+			printf("usnm: %d\n", *chat_no_d);
 		}
 
 		// CREATE SERVER MESSAGE
@@ -315,6 +319,7 @@ int main(int argc, char** argv) {
 		strncpy(new_client.cli_username, username, sizeof(new_client.cli_username));
 		new_client.clisockfd = newsockfd; //ip addr
 		strcpy(new_client.cli_ip_iddr, inet_ntoa(cli_addr.sin_addr));
+		new_client.chat_room_no = 0;
 		//new_client.chat_room_no = room_no; //which chat room they're in
 		//append client to list
 		client_list[num_clients++] = new_client;
