@@ -26,6 +26,7 @@ pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int client_leave = 0;
 int messages_sent = 0;
+char client_username[USERNAME_SIZE];
 
 typedef struct _ThreadArgs {
 	int clisockfd;
@@ -45,6 +46,8 @@ void strcat_char(char* destination, char source) {
 
 void print_all(char* message) {
 	for(int i = 0; i < strlen(message) + 1; i++) {
+		if(message[i] == HEADER_MSG) 
+			printf("|x01|");
 		if(message[i] == START_MSG) 
 			printf("|x02|");
 		if(message[i] == END_MSG)
@@ -190,7 +193,7 @@ void* recv_thread(void* args) {
 		char f_msg[MSG_BUFFER_SIZE];
 
 		// DECODE SERVER MESSAGE
-		decode_server_message(username_d_s, ip_addr_d_s, color_no_d_s, message_d_s, f_msg);
+		decode_server_message(username_d_s, ip_addr_d_s, color_no_d_s, message_d_s, buffer);
 
 		buffer[MSG_BUFFER_SIZE] = '\0';
 		total_nrcv += nrcv;
@@ -207,7 +210,7 @@ void* recv_thread(void* args) {
 		char* eom = strchr(buffer, END_MSG);
 		if (eom != NULL) {
 			printf("\033[38;5;%dm", *color_no_d_s); //switch color before message
-			printf("\nSERVER: %s\n", message);
+			printf("\n[%s] %s\n", username_d_s, message);
 			total_nrcv = 0;
 			memset(message, 0, MSG_SIZE);
 		}
@@ -247,6 +250,20 @@ void* send_thread(void* args) {
 		//get rid of new line
 		message[--msg_len] = '\0';
 
+		char f_msg[MSG_BUFFER_SIZE];
+		char* username = client_username;
+		int chat_no = 0;
+		char* ip_addr = "127.0.0.1";
+		int message_id = 0;
+		int message_order = 0;
+		
+		create_client_message(f_msg, username, chat_no, ip_addr, message_id, message_order, message);
+
+		print_all(f_msg);
+
+		send(sockfd, f_msg, strlen(f_msg), 0);
+
+		/*
 		while (bytes_sent < msg_len + 1) 
 		{
 			// load buffer
@@ -285,7 +302,7 @@ void* send_thread(void* args) {
 			}
 			nsend = send(sockfd, buffer, strlen(buffer), 0);
 			if (nsend < 0) error("ERROR writing to socket");
-		}
+		} */
 	}	
 
         close(sockfd);
@@ -321,13 +338,11 @@ int main(int argc, char *argv[])
 	int n;
 		
 	//ask for username
-	char username[USERNAME_SIZE]; 
-	memset(username, 0, USERNAME_SIZE);
 	printf("Please enter a username: ");
-	scanf("%s", username); //read user name
+	scanf("%s", client_username); //read user name
 	//add check is less than username size
 
-	send(sockfd, username, strlen(username), 0);
+	send(sockfd, client_username, strlen(client_username), 0);
 
 	//clear input buffer
 	int c;

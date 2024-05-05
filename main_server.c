@@ -193,12 +193,12 @@ void* thread_main(void* args)
 		char ip_addr_d[20 + 2 + 1];
 		int* message_id_d = (int*)malloc(sizeof(int));
 		int* message_order_d = (int*)malloc(sizeof(int));
-		char message_d[MSG_BUFFER_SIZE];
+		//char message_d[MSG_BUFFER_SIZE];
 		char f_msg[MSG_BUFFER_SIZE];
 
 
 		// DECODE CLIENT MESSAGE
-		decode_client_message(username_d, chat_no_d, ip_addr_d, message_id_d, message_order_d, message_d, f_msg);
+		decode_client_message(username_d, chat_no_d, ip_addr_d, message_id_d, message_order_d, buffer, f_msg);
 
 		int color_no; //preparing to send color for client
 		for(int i = 0; i < num_clients; i++) {
@@ -208,7 +208,7 @@ void* thread_main(void* args)
 		}
 
 		// CREATE SERVER MESSAGE
-		create_server_message(f_msg, username_d, ip_addr_d, color_no, message_d);
+		create_server_message(f_msg, username_d, ip_addr_d, color_no, buffer);
 
 
 
@@ -283,7 +283,7 @@ int main(int argc, char** argv) {
 
 		strncpy(new_client.cli_username, username, sizeof(new_client.cli_username));
 		new_client.clisockfd = newsockfd; //ip addr
-		new_client.cli_ip_iddr = inet_ntoa(cli_addr.sin_addr);
+		strcpy(new_client.cli_ip_iddr, inet_ntoa(cli_addr.sin_addr));
 		//new_client.chat_room_no = room_no; //which chat room they're in
 		//append client to list
 		client_list[num_clients++] = new_client;
