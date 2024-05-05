@@ -16,7 +16,7 @@ USERNAME CANNOT INCLUDE [
 #include <net/if.h>
 #include <arpa/inet.h>
 
-#define PORT_NUM 10004
+#define PORT_NUM 10005
 #define USERNAME_SIZE 50
 #define MSG_BUFFER_SIZE 256
 #define MSG_SIZE 65536
@@ -30,6 +30,8 @@ pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
 int client_leave = 0;
 int messages_sent = 0;
 char client_username[USERNAME_SIZE];
+int chatroom_no = 0;
+char ip_addr[IP_SIZE];
 
 typedef struct _ThreadArgs {
 	int clisockfd;
@@ -262,12 +264,10 @@ void* send_thread(void* args) {
 
 		char f_msg[MSG_BUFFER_SIZE];
 		char* username = client_username;
-		int chat_no = 0;
-		char* ip_addr = "127.0.0.1";
 		int message_id = messages_sent;
 		int message_order = 0;
 		
-		create_client_message(f_msg, username, chat_no, ip_addr, message_id, message_order, message);
+		create_client_message(f_msg, username, chatroom_no, ip_addr, message_id, message_order, message);
 
 		send(sockfd, f_msg, strlen(f_msg), 0);
 
@@ -321,7 +321,7 @@ void* send_thread(void* args) {
 
 int main(int argc, char *argv[])
 {
-	if (argc < 3) error("Please specify hostname & chat room");
+	//if (argc < 2) error("Please specify hostname & chat room");
 
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd < 0) error("ERROR opening socket");
@@ -351,18 +351,19 @@ int main(int argc, char *argv[])
 	//add check is less than username size
 
 	char *room_arg = argv[2];
-	int room_no = 0;
 
 	if(strcmp(room_arg, "new") == 0){
 		//user wants new room
-		room_no = -1; //indicates new room
-	}else{
+		chatroom_no = -1; //indicates new room
+	}else if(strcmp(room_arg, "") == 0){
+		printf("\033[1mServer Says the following options are available:\033[1m");
+	}
+	else{
 		//user wants to join specific chat room
-		room_no = atoi(room_arg);
+		chatroom_no = atoi(room_arg);
 	}
 
 	char f_msg[MSG_BUFFER_SIZE];
-    char ip_addr[IP_SIZE];
     int message_id = messages_sent;
     int message_order = 0;
 	char message[MSG_BUFFER_SIZE] = "chatroom_no";
@@ -375,7 +376,7 @@ int main(int argc, char *argv[])
 	ioctl(sockfd, SIOCGIFADDR, &ifr);
 	sprintf(ip_addr, "%s", inet_ntoa(( (struct sockaddr_in *)&ifr.ifr_addr )->sin_addr));
 
-	create_client_message(f_msg, client_username, room_no, ip_addr, message_id, message_order, message);
+	create_client_message(f_msg, client_username, chatroom_no, ip_addr, message_id, message_order, message);
 	// print_all(f_msg);
 	send(sockfd, f_msg, strlen(f_msg), 0);
 
