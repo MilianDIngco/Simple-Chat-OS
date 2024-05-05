@@ -215,6 +215,7 @@ void* recv_thread(void* args) {
 			printf("Color is: %d", *color_no_d_s);
 			printf("\033[38;5;%dm", *color_no_d_s); //switch color before message
 			printf("\n[%s (%s)] %s\n", username_d_s, ip_addr_d_s, message_d_s);
+			printf("\033[0m"); //reset back to default
 			total_nrcv = 0;
 			memset(message, 0, MSG_SIZE);
 		}
@@ -225,7 +226,7 @@ void* recv_thread(void* args) {
 
 // THREAD FOR SENDING TO SERVER
 void* send_thread(void* args) {
-	
+	printf("\033[0m"); //reset back to default
 	pthread_detach(pthread_self());
 
 	int sockfd = ((ThreadArgs*) args)->clisockfd;
