@@ -236,7 +236,7 @@ void* thread_main(void* args)
 	num_clients--;
 
 	char bye_msg[MSG_BUFFER_SIZE];
-	char* bye_str = " has left the chat room!";
+	char* bye_str = "\033[3mhas left the chat room!\033[3m";
 
 	create_server_message(bye_msg, username_thread, ip_thread, 0, bye_str);
 	send_all(bye_msg);
@@ -330,7 +330,7 @@ int main(int argc, char** argv) {
 
 		// print welcome message
 		char welcome_message[MSG_BUFFER_SIZE];
-		char* welcome_str = " joined the chat room!";
+		char* welcome_str = "\033[3mjoined the chat room!\033[3m";
 
 		create_server_message(welcome_message, username, inet_ntoa(cli_addr.sin_addr), 0, welcome_str);
 		send_all(welcome_message);
