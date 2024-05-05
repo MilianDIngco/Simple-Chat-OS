@@ -13,6 +13,7 @@
 #define MSG_BUFFER_SIZE 256
 #define MAX_CLIENTS 16
 #define MSG_SIZE 65536
+#define IP_SIZE 30
 #define START_MSG '\x02'
 #define END_MSG '\x03'
 #define HEADER_MSG '\x01'
@@ -61,18 +62,22 @@ Takes chat number by reference
 Takes message by reference
 Lotsa parsing woohoo
 */
-void decode_client_message(char* username, int* chat_no, char* ip_addr, char* message, char* f_msg) {
+void decode_client_message(char* username, int* chat_no, char* ip_addr, int* message_id, int* message_order, char* message, char* f_msg) {
     size_t f_msg_len = strlen(f_msg);
     char chat_str[3];
+    char message_id_str[7];
+    char message_order_str[7];
     memset(chat_str, 0, 3);
-    // INT MAP 1: USERNAME, 2: CHAT_NO, 3: IP_ADDR, 4: MESSAGE, 0: SOMETHING WENT HORRIBLY WRONG
+    memset(message_id_str, 0, 7);
+    memset(message_order_str, 0, 7);
+    // INT MAP 1: USERNAME, 2: CHAT_NO, 3: IP_ADDR,  4: message_id, 5: message_order, 6: MESSAGE, 0: SOMETHING WENT HORRIBLY WRONG
     int map = 0;
-    // counter map 1: USERNAME, 2: CHAT_NO, 3: IP_ADDR
+    // counter map 1: USERNAME, 2: CHAT_NO, 3: IP_ADDR, 4: MESSAGE_ID, 5: MESSAGE_ORDER
     int bracket_counter = 0; 
     for(int i = 0; i < f_msg_len; i++) {
         if (f_msg[i] == START_MSG) 
-            map = 4;
-        if (f_msg[i] == '[' && bracket_counter < 3) {
+            map = 6;
+        if (f_msg[i] == '[' && bracket_counter < 5) {
             bracket_counter++;
             map++;
         }
@@ -82,12 +87,18 @@ void decode_client_message(char* username, int* chat_no, char* ip_addr, char* me
             strcat_char(chat_str, f_msg[i]);
         } else if (map == 3 && f_msg[i] != '[') {
             strcat_char(ip_addr, f_msg[i]);
-        } else if (map == 4 && f_msg[i] != START_MSG) {
+        } else if (map == 4 && f_msg[i] != '[') {
+            strcat_char(message_id_str, f_msg[i]);
+        } else if (map == 5 && f_msg[i] != '[') {
+            strcat_char(message_order_str, f_msg[i]);
+        } else if (map == 6 && f_msg[i] != START_MSG) {
             strcat_char(message, f_msg[i]);
         }
     }
 
     *chat_no = atoi(chat_str); 
+    *message_id = atoi(message_id_str);
+    *message_order = atoi(message_order_str);
 }
 
 /*
@@ -99,7 +110,7 @@ void create_server_message(char* f_msg, char* username, char* ip_addr, int color
     // format strings to have brackets surrounding them
 
     char b_username[USERNAME_SIZE + 2 + 1];
-    char b_ip_addr[20 + 2 + 1];
+    char b_ip_addr[IP_SIZE + 2 + 1];
     char b_color_no[3 + 2 + 1];
 
     sprintf(b_username, "[%s", username);

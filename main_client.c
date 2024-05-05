@@ -17,6 +17,7 @@ USERNAME CANNOT INCLUDE [
 #define USERNAME_SIZE 50
 #define MSG_BUFFER_SIZE 256
 #define MSG_SIZE 65536
+#define IP_SIZE 30
 #define START_MSG '\x02'
 #define END_MSG '\x03'
 #define HEADER_MSG '\x01'
@@ -24,6 +25,7 @@ USERNAME CANNOT INCLUDE [
 pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int client_leave = 0;
+int messages_sent = 0;
 
 typedef struct _ThreadArgs {
 	int clisockfd;
@@ -78,23 +80,28 @@ chat_no - chat number
 ip_addr - clients ip
 message - string message you want to send
 */
-void create_client_message(char* f_msg, char* username, int chat_no, char* ip_addr, char* message) {
+void create_client_message(char* f_msg, char* username, int chat_no, char* ip_addr, int message_id, int message_order, char* message) {
     memset(f_msg, 0, MSG_BUFFER_SIZE);
     // format strings to have brackets surrounding them
 
-    char b_username[USERNAME_SIZE + 2 + 1];
-    char b_ip_addr[20 + 2 + 1];
-    char b_chat_no[2 + 2 + 1];
+    char b_username[USERNAME_SIZE + 1 + 1];
+    char b_ip_addr[IP_SIZE];
+    char b_chat_no[2 + 1 + 1];
+    char b_message_id[7 + 1 + 1];
+    char b_message_order[7 + 1 + 1];
 
     sprintf(b_username, "[%s", username);
     sprintf(b_chat_no, "[%d", chat_no);
     sprintf(b_ip_addr, "[%s", ip_addr);
+    sprintf(b_message_id, "[%d", message_id);
+    sprintf(b_message_order, "[%d", message_order);
 
     // get string lengths
-    size_t usnm_len = strlen(b_username);
-    size_t ip_len = strlen(b_ip_addr);
-    size_t msg_len = strlen(message);
-    size_t chat_no_len = strlen(b_chat_no);
+    // size_t usnm_len = strlen(b_username);
+    // size_t ip_len = strlen(b_ip_addr);
+    // size_t msg_len = strlen(message);
+    // size_t chat_no_len = strlen(b_chat_no);
+    // size_t message_id_len = strlen(b_message_id);
 
     // START HEADER
 
@@ -105,6 +112,10 @@ void create_client_message(char* f_msg, char* username, int chat_no, char* ip_ad
     strcat(f_msg, b_chat_no);
 
     strcat(f_msg, b_ip_addr);
+
+    strcat(f_msg, b_message_id);
+
+    strcat(f_msg, b_message_order);
 
     // START MESSAGE
 
