@@ -27,13 +27,6 @@ int used_Color[16] = { 0 }; //used to determine if a corresponding color was use
 
 //--------------- STRUCTS ;D -----------------------------------
 
-typedef struct _ThreadArgs {
-	int clisockfd;
-	char username_thread[USERNAME_SIZE];
-	char ip_thread[IP_SIZE];
-	int chatroom_no;
-} ThreadArgs; //what
-
 //structure to define client info for each unique client
 typedef struct ClientInfo{
 	char cli_username[USERNAME_SIZE]; //username
@@ -41,7 +34,16 @@ typedef struct ClientInfo{
 	char cli_ip_iddr[IP_SIZE]; //ip addr
 	int chat_room_no; //what chat room they're in
 	int color; //color of their text
+	int* valid;
 } ClientInfo;
+
+typedef struct _ThreadArgs {
+	int clisockfd;
+	char username_thread[USERNAME_SIZE];
+	char ip_thread[IP_SIZE];
+	int chatroom_no;
+	ClientInfo thread_client;
+} ThreadArgs; //what
 
 //-------------- GLOBAL VARIABLES :3> --------------------------
 int num_clients = 0;
@@ -148,18 +150,19 @@ void send_all(const char *msg)
 {
 	char buffer[MSG_BUFFER_SIZE];
 	for(int i = 0; i < MAX_CLIENTS; i++) {
-		if(client_list[i].cli_username != NULL) {
+		if(client_list[i].valid != NULL && *(client_list[i].valid) == 1) {
 			send(client_list[i].clisockfd, msg, MSG_BUFFER_SIZE, 0);
 		}
 	}
 }
 
-void clear_name(char* username, int chatroom_no, char* ip_thread) {
+void print_client_list() {
+	printf("Updated Client List: \n");
+	int num = 1;
 	for(int i = 0; i < MAX_CLIENTS; i++) {
-		if(strcmp(client_list[i].cli_username, username) == 0 && strcmp(client_list[i].cli_ip_iddr, ip_thread) && client_list[i].chat_room_no == chatroom_no) {
-			memset(client_list[i].cli_username, 0, strlen(client_list[i].cli_username));
-			memset(client_list[i].cli_ip_iddr, 0, strlen(client_list[i].cli_ip_iddr));
-			client_list[i].chat_room_no = -1;
+		if(client_list[i].valid != NULL && *(client_list[i].valid) == 1) {
+			printf("%d: %s %d\n", num, client_list[i].cli_username, *(client_list[i].valid));
+			num++;
 		}
 	}
 }
@@ -174,7 +177,10 @@ void* thread_main(void* args)
 	char* username_thread = strdup(((ThreadArgs*) args)->username_thread);
 	int chatroom_no = ((ThreadArgs*) args)->chatroom_no;
 	char* ip_thread = strdup(((ThreadArgs*) args)->ip_thread);
+	struct ClientInfo thread_client = ((ThreadArgs*) args)->thread_client;
 	free(args);
+
+	print_client_list();
 
 	//-------------------------------
 	// Now, we receive/send messages
@@ -241,7 +247,10 @@ void* thread_main(void* args)
 	create_server_message(bye_msg, username_thread, ip_thread, 0, bye_str);
 	send_all(bye_msg);
 
-	clear_name(username_thread, chatroom_no, ip_thread);
+	// set valid to 0
+	*thread_client.valid = 0;
+
+	print_client_list();
 	
 	return NULL;
 }
@@ -301,6 +310,8 @@ int main(int argc, char** argv) {
 		used_Color[client_color] = 1; //mark as used
 		new_client.color = color_Print[client_color];
 
+		new_client.valid = (int*)malloc(sizeof(int));
+		*(new_client.valid) = 1;
 		strncpy(new_client.cli_username, username, sizeof(new_client.cli_username));
 		new_client.clisockfd = newsockfd; //ip addr
 		strcpy(new_client.cli_ip_iddr, inet_ntoa(cli_addr.sin_addr));
@@ -324,6 +335,7 @@ int main(int argc, char** argv) {
 		strcpy(args->username_thread, username);
 		args->chatroom_no = 0;
 		strcpy(args->ip_thread, inet_ntoa(cli_addr.sin_addr));
+		args->thread_client = new_client;
 
 		pthread_t tid;
 		if (pthread_create(&tid, NULL, thread_main, (void*) args) != 0) error("ERROR creating a new thread");
@@ -335,6 +347,8 @@ int main(int argc, char** argv) {
 		create_server_message(welcome_message, username, inet_ntoa(cli_addr.sin_addr), 0, welcome_str);
 		send_all(welcome_message);
 	}
+
+	free(client_list);
 
     return 0;
 }
