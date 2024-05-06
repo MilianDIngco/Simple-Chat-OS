@@ -9,7 +9,7 @@
 #include <pthread.h>
 #include <time.h>
 
-#define PORT_NUM 10004
+#define PORT_NUM 10005
 #define USERNAME_SIZE 50
 #define MSG_BUFFER_SIZE 256
 #define MAX_CLIENTS 16
@@ -50,6 +50,7 @@ typedef struct _ThreadArgs {
 int num_clients = 0;
 ClientInfo* client_list;
 int chatroom_list[MAX_CHATROOMS] = { 0 };
+int n_rooms = 0;
 
 //-------------- FUNCTIONS >:3 ---------------------------------
 void error(const char *msg)
@@ -274,6 +275,7 @@ void* thread_main(void* args)
 	send_chatroom(bye_msg, thread_client.chat_room_no);
 
 	chatroom_list[chatroom_no]--;
+	if(chatroom_list[chatroom_no] == 0) n_rooms--;
 	// set valid to 0
 	*thread_client.valid = 0;
 
@@ -323,50 +325,90 @@ int main(int argc, char** argv) {
 		int* message_id = (int*)malloc(sizeof(int));
 		int* message_order = (int*)malloc(sizeof(int));
 		char message[MSG_BUFFER_SIZE];
-
-		int chatroom_sucess = recv(newsockfd, chatroom_msg, MSG_BUFFER_SIZE, 0);
-		if (chatroom_sucess < 0) error ("ERROR failed to get username and chatroom no");
-		decode_client_message(username, chat_no, ip_addr, message_id, message_order, message, chatroom_msg);
-
-		printf("Username: %s Chatroom #: %d\n", username, *chat_no);
-
-		// CHAT ROOM CASES
-		// if new 
 		int chat_index = -1;
-		if (*chat_no == -1) {
-			for(int i = 0; i < MAX_CHATROOMS; i++) {
-				if(chatroom_list[i] == 0) {
-					chatroom_list[i]++;
-					chat_index = i;
-					break;
+
+		int got_room = -1;
+		while (got_room == -1) {
+			
+			int chatroom_sucess = recv(newsockfd, chatroom_msg, MSG_BUFFER_SIZE, 0);
+			if (chatroom_sucess < 0) error ("ERROR failed to get username and chatroom no");
+			decode_client_message(username, chat_no, ip_addr, message_id, message_order, message, chatroom_msg);
+			char chat_no_buffer[4];
+			// CHAT ROOM CASES
+			// if new 
+			if (*chat_no == -1) {
+				for(int i = 0; i < MAX_CHATROOMS; i++) {
+					if(chatroom_list[i] == 0) {
+						chatroom_list[i]++;
+						chat_index = i;
+						break;
+					}
 				}
-			}
-		} else {
-			// if exists 
-			if(chatroom_list[*chat_no] > 0)
-				chat_index = *chat_no;
-			// if doesn't exist
-			if(chat_index == -1) {
-				printf("ERROR room DNE pls choose existing rm # lol");
-				// continue;
-			}
+				n_rooms++;
 
+				// send chat room index back to client
+				memset(chat_no_buffer, 0, 4);
+				sprintf(chat_no_buffer, "%d", chat_index);
+				send(newsockfd, chat_no_buffer, strlen(chat_no_buffer), 0);
+				got_room = 0;
+			} else if (*chat_no >= 0) {
+				// if exists 
+				if((*chat_no < MAX_CHATROOMS) && chatroom_list[*chat_no] > 0){
+					chat_index = *chat_no;
+					chatroom_list[chat_index]++;
+				} else {
+					memset(chat_no_buffer, 0, 4);
+					sprintf(chat_no_buffer, "%d", -1);
+					send(newsockfd, chat_no_buffer, strlen(chat_no_buffer), 0);
+					continue;
+				}
+
+				// send chat room index back to client
+				memset(chat_no_buffer, 0, 4);
+				sprintf(chat_no_buffer, "%d", chat_index);
+				send(newsockfd, chat_no_buffer, strlen(chat_no_buffer), 0);
+				got_room = 1;
+			} else if (*chat_no == -2 && n_rooms > 0) {
+				// if they entered nothing
+				memset(chat_no_buffer, 0, 4);
+				sprintf(chat_no_buffer, "%d", -1);
+				send(newsockfd, chat_no_buffer, strlen(chat_no_buffer), 0);
+
+				// send list of chat rooms available
+				char chat_list_str[MSG_BUFFER_SIZE];
+				memset(chat_list_str, 0, MSG_BUFFER_SIZE);
+				sprintf(chat_list_str, "\033[1mServer says following options are available:\033[1m\n");
+				char chat_cat[MSG_BUFFER_SIZE];
+				for(int i = 0; i < MAX_CHATROOMS; i++) {
+					if(chatroom_list[i] != 0) {
+						memset(chat_cat, 0, MSG_BUFFER_SIZE);
+						sprintf(chat_cat, "Room %d: %d %s\n", i, chatroom_list[i], ((chatroom_list[i] == 1) ? "person" : "people"));
+						strcat(chat_list_str, chat_cat);
+					}
+				}
+				memset(chat_cat, 0, MSG_BUFFER_SIZE);
+				sprintf(chat_cat, "\033[1mChoose the room number or type [new] to create a new room: \033[1m");
+				strcat(chat_list_str, chat_cat);
+				send(newsockfd, chat_list_str, strlen(chat_list_str), 0);
+
+			} else if (*chat_no == -2 && n_rooms == 0) {
+				for(int i = 0; i < MAX_CHATROOMS; i++) {
+					if(chatroom_list[i] == 0) {
+						chatroom_list[i]++;
+						chat_index = i;
+						break;
+					}
+				}
+				n_rooms++;
+
+				// send chat room index back to client
+				memset(chat_no_buffer, 0, 4);
+				sprintf(chat_no_buffer, "%d", chat_index);
+				send(newsockfd, chat_no_buffer, strlen(chat_no_buffer), 0);
+				got_room = 2;
+			}
 		}
 
-		printf("-------chat room sizes------\n");
-		for(int i = 0; i < MAX_CHATROOMS; i++) {
-			if(chatroom_list[i] != 0) {
-				printf("%d: %d\n", i, chatroom_list[i]);
-			}
-		}
-		printf("-----------------------------\n");
-
-		// send chat room index back to client
-		char chat_no_buffer[4];
-		memset(chat_no_buffer, 0, 4);
-		sprintf(chat_no_buffer, "%d", chat_index);
-		send(newsockfd, chat_no_buffer, strlen(chat_no_buffer), 0);
-		
 		// -------------------------------------------------------------make new client------------------------------------------------
 		struct ClientInfo new_client;
 		int client_color;
@@ -395,7 +437,7 @@ int main(int argc, char** argv) {
 		//append client to list
 		client_list[num_clients++] = new_client;
 
-		printf("%d: %s has connected: %s\n", num_clients, username, inet_ntoa(cli_addr.sin_addr));
+		// printf("%d: %s has connected: %s\n", num_clients, username, inet_ntoa(cli_addr.sin_addr));
 
 		// prepare ThreadArgs structure to pass client socket
 		ThreadArgs* args = (ThreadArgs*) malloc(sizeof(ThreadArgs));

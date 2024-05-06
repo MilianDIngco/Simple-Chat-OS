@@ -16,7 +16,7 @@ USERNAME CANNOT INCLUDE [
 #include <net/if.h>
 #include <arpa/inet.h>
 
-#define PORT_NUM 10004
+#define PORT_NUM 10005
 #define USERNAME_SIZE 50
 #define MSG_BUFFER_SIZE 256
 #define MSG_SIZE 65536
@@ -229,6 +229,7 @@ void* recv_thread(void* args) {
 
 // THREAD FOR SENDING TO SERVER
 void* send_thread(void* args) {
+
 	printf("\033[0m"); //reset back to default
 	pthread_detach(pthread_self());
 
@@ -352,17 +353,20 @@ int main(int argc, char *argv[])
 	int c;
 	while ((c = getchar()) != '\n' && c != EOF);
 
-	char *room_arg = argv[2];
-
-	if(strcmp(room_arg, "new") == 0){
-		//user wants new room
-		chatroom_no = -1; //indicates new room
-	}//else if(strcmp(room_arg, "") == 0){
-		//printf("\033[1mServer Says the following options are available:\033[1m");
-	//}
-	else{
-		//user wants to join specific chat room
-		chatroom_no = atoi(room_arg);
+	char* room_arg;
+	if (argc == 2) {
+		chatroom_no = -2; 
+	} else {
+		if(strcmp(argv[2], "new") == 0){
+			//user wants new room
+			chatroom_no = -1; //indicates new room
+		}//else if(strcmp(room_arg, "") == 0){
+			//printf("\033[1mServer Says the following options are available:\033[1m");
+		//}
+		else{
+			//user wants to join specific chat room
+			chatroom_no = atoi(argv[2]);
+		}
 	}
 
 	char f_msg[MSG_BUFFER_SIZE];
@@ -378,16 +382,60 @@ int main(int argc, char *argv[])
 	ioctl(sockfd, SIOCGIFADDR, &ifr);
 	sprintf(ip_addr, "%s", inet_ntoa(( (struct sockaddr_in *)&ifr.ifr_addr )->sin_addr));
 
-	// sened chat no to server
+	// send chat no to server
 	create_client_message(f_msg, client_username, chatroom_no, ip_addr, message_id, message_order, message);
 	// print_all(f_msg);
 	send(sockfd, f_msg, strlen(f_msg), 0);
 
-	// get chat no from server
+	// get chat no from server ---------------------------------------------------------------------------
 	char chat_no_buffer[4];
 	memset(chat_no_buffer, 0, 4);
 	recv(sockfd, chat_no_buffer, 4, 0);
 	chatroom_no = atoi(chat_no_buffer);
+
+	if (chatroom_no == -1) {
+		// gets list of rooms from server
+		char chatroom_list_buffer[MSG_BUFFER_SIZE];
+		memset(chatroom_list_buffer, 0, MSG_BUFFER_SIZE);
+		recv(sockfd, chatroom_list_buffer, MSG_BUFFER_SIZE, 0);
+		printf("%s", chatroom_list_buffer);
+
+		int first_time = 0;
+
+		while (chatroom_no == -1) {
+			if(first_time > 0) {
+				printf("\nThat room does not exist, please enter a new one: ");
+			}
+			//ask for chat room
+			char chat_temp[4];
+			memset(chat_temp, 0, 4);
+			scanf("%s", chat_temp); 
+			
+			//clear input buffer
+			int c;
+			while ((c = getchar()) != '\n' && c != EOF);
+			
+			int chat_temp_num;
+
+			if(strcmp(chat_temp, "new") == 0){
+				//user wants new room
+				chat_temp_num = -1; //indicates new room
+			} else {
+				//user wants to join specific chat room
+				chat_temp_num = atoi(chat_temp);
+			}
+
+			// send chat no to server
+			char f_msg_temp[MSG_BUFFER_SIZE];
+			create_client_message(f_msg_temp, client_username, chat_temp_num, ip_addr, message_id, message_order, message);
+			// print_all(f_msg);
+			send(sockfd, f_msg_temp, strlen(f_msg_temp), 0);
+			memset(chat_no_buffer, 0, 4);
+			recv(sockfd, chat_no_buffer, 4, 0);
+			chatroom_no = atoi(chat_no_buffer);	
+			first_time++;
+		}
+	}
 	
 	printf("Connected to %s with room number %d\n", argv[1], chatroom_no);
 
