@@ -343,13 +343,8 @@ int main(int argc, char** argv) {
 			}
 		} else {
 			// if exists 
-			for(int i = 0; i < MAX_CHATROOMS; i++) {
-				if(chatroom_list[i] > 0) {
-					chatroom_list[i]++;
-					chat_index = i;
-					break;
-				}
-			}
+			if(chatroom_list[*chat_no] > 0)
+				chat_index = *chat_no;
 			// if doesn't exist
 			if(chat_index == -1) {
 				printf("ERROR room DNE pls choose existing rm # lol");
@@ -358,13 +353,13 @@ int main(int argc, char** argv) {
 
 		}
 
-		// printf("-------chat room sizes------\n");
-		// for(int i = 0; i < MAX_CHATROOMS; i++) {
-		// 	if(chatroom_list[i] != 0) {
-		// 		printf("%d: %d\n", i, chatroom_list[i]);
-		// 	}
-		// }
-		// printf("-----------------------------\n");
+		printf("-------chat room sizes------\n");
+		for(int i = 0; i < MAX_CHATROOMS; i++) {
+			if(chatroom_list[i] != 0) {
+				printf("%d: %d\n", i, chatroom_list[i]);
+			}
+		}
+		printf("-----------------------------\n");
 
 		// send chat room index back to client
 		char chat_no_buffer[4];
@@ -372,7 +367,7 @@ int main(int argc, char** argv) {
 		sprintf(chat_no_buffer, "%d", chat_index);
 		send(newsockfd, chat_no_buffer, strlen(chat_no_buffer), 0);
 		
-		//make new client
+		// -------------------------------------------------------------make new client------------------------------------------------
 		struct ClientInfo new_client;
 		int client_color;
 		int color_count = 0;

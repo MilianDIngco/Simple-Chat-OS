@@ -387,8 +387,10 @@ int main(int argc, char *argv[])
 	char chat_no_buffer[4];
 	memset(chat_no_buffer, 0, 4);
 	recv(sockfd, chat_no_buffer, 4, 0);
+	print_all(chat_no_buffer);
 	chatroom_no = atoi(chat_no_buffer);
 	
+	printf("chatroom: %d\n", chatroom_no);
 
 	// create threads and run them
 	ThreadArgs* send_args = (ThreadArgs*)malloc(sizeof(ThreadArgs));
