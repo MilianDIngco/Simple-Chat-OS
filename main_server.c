@@ -9,7 +9,7 @@
 #include <pthread.h>
 #include <time.h>
 
-#define PORT_NUM 10005
+#define PORT_NUM 10004
 #define USERNAME_SIZE 50
 #define MSG_BUFFER_SIZE 256
 #define MAX_CLIENTS 16
