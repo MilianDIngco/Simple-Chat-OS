@@ -177,8 +177,6 @@ void decode_server_message(char* username, char* ip_addr, int* color_no, char* m
 // THREAD FOR RECEIVING FROM SERVER
 void* recv_thread(void* args) {
 
-	printf("RECV \n");
-
 	pthread_detach(pthread_self());
 
 	int sockfd = ((ThreadArgs*) args)->clisockfd;
@@ -350,6 +348,10 @@ int main(int argc, char *argv[])
 	scanf("%s", client_username); //read user name
 	//add check is less than username size
 
+		//clear input buffer
+	int c;
+	while ((c = getchar()) != '\n' && c != EOF);
+
 	char *room_arg = argv[2];
 
 	if(strcmp(room_arg, "new") == 0){
@@ -376,13 +378,17 @@ int main(int argc, char *argv[])
 	ioctl(sockfd, SIOCGIFADDR, &ifr);
 	sprintf(ip_addr, "%s", inet_ntoa(( (struct sockaddr_in *)&ifr.ifr_addr )->sin_addr));
 
+	// sened chat no to server
 	create_client_message(f_msg, client_username, chatroom_no, ip_addr, message_id, message_order, message);
 	// print_all(f_msg);
 	send(sockfd, f_msg, strlen(f_msg), 0);
 
-	//clear input buffer
-	int c;
-	while ((c = getchar()) != '\n' && c != EOF);
+	// get chat no from server
+	char chat_no_buffer[4];
+	memset(chat_no_buffer, 0, 4);
+	recv(sockfd, chat_no_buffer, 4, 0);
+	chatroom_no = atoi(chat_no_buffer);
+	
 
 	// create threads and run them
 	ThreadArgs* send_args = (ThreadArgs*)malloc(sizeof(ThreadArgs));

@@ -158,6 +158,21 @@ void send_all(const char *msg)
 	}
 }
 
+void print_all(char* message) {
+	for(int i = 0; i < strlen(message) + 1; i++) {
+		if(message[i] == HEADER_MSG) 
+			printf("|x01|");
+		if(message[i] == START_MSG) 
+			printf("|x02|");
+		if(message[i] == END_MSG)
+			printf("|x03|");
+		if(message[i] == 0)
+			printf("|end|");
+		printf("%c", message[i]);
+	}
+
+}
+
 void send_chatroom(const char *msg, int chat_no)
 {
 	char buffer[MSG_BUFFER_SIZE];
@@ -238,7 +253,6 @@ void* thread_main(void* args)
 
 		// send_all(buffer);
 		send_chatroom(buffer, *chat_no_d);
-		printf("I SENT THIS SHIT FROM CHAT ROOM %d\n", *chat_no_d);
 
 		/*char* eom = strchr(buffer, '\0');
 		if (eom != NULL) {
@@ -257,7 +271,7 @@ void* thread_main(void* args)
 	char* bye_str = "\033[3mhas left the chat room!\033[3m";
 
 	create_server_message(bye_msg, username_thread, ip_thread, 0, bye_str);
-	send_all(bye_msg);
+	send_chatroom(bye_msg, thread_client.chat_room_no);
 
 	chatroom_list[chatroom_no]--;
 	// set valid to 0
@@ -344,14 +358,19 @@ int main(int argc, char** argv) {
 
 		}
 
-		printf("-------chat room sizes------\n");
-		for(int i = 0; i < MAX_CHATROOMS; i++) {
-			if(chatroom_list[i] != 0) {
-				printf("%d: %d\n", i, chatroom_list[i]);
-			}
-		}
-		printf("-----------------------------\n");
-		
+		// printf("-------chat room sizes------\n");
+		// for(int i = 0; i < MAX_CHATROOMS; i++) {
+		// 	if(chatroom_list[i] != 0) {
+		// 		printf("%d: %d\n", i, chatroom_list[i]);
+		// 	}
+		// }
+		// printf("-----------------------------\n");
+
+		// send chat room index back to client
+		char chat_no_buffer[4];
+		memset(chat_no_buffer, 0, 4);
+		sprintf(chat_no_buffer, "%d", chat_index);
+		send(newsockfd, chat_no_buffer, strlen(chat_no_buffer), 0);
 		
 		//make new client
 		struct ClientInfo new_client;
@@ -381,12 +400,6 @@ int main(int argc, char** argv) {
 		//append client to list
 		client_list[num_clients++] = new_client;
 
-		if (num_clients > 1) {
-			char connected_str[3 + USERNAME_SIZE + 500];
-			sprintf(connected_str, "%d: %s has connected: %s\n", num_clients, username, inet_ntoa(cli_addr.sin_addr));
-			send_all(connected_str);		
-		}
-
 		printf("%d: %s has connected: %s\n", num_clients, username, inet_ntoa(cli_addr.sin_addr));
 
 		// prepare ThreadArgs structure to pass client socket
@@ -407,7 +420,7 @@ int main(int argc, char** argv) {
 		char* welcome_str = "\033[3mjoined the chat room!\033[3m";
 
 		create_server_message(welcome_message, username, inet_ntoa(cli_addr.sin_addr), 0, welcome_str);
-		send_all(welcome_message);
+		send_chatroom(welcome_message, chat_index);
 	}
 
 	free(client_list);
