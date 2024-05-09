@@ -35,7 +35,7 @@ typedef struct ClientInfo{
 	char cli_ip_iddr[IP_SIZE]; //ip addr
 	int chat_room_no; //what chat room they're in
 	int color; //color of their text
-	int* valid;
+	int valid;
 } ClientInfo;
 
 typedef struct _ThreadArgs {
@@ -43,7 +43,7 @@ typedef struct _ThreadArgs {
 	char username_thread[USERNAME_SIZE];
 	char ip_thread[IP_SIZE];
 	int chatroom_no;
-	ClientInfo thread_client;
+  int client_index;
 } ThreadArgs; //what
 
 //-------------- GLOBAL VARIABLES :3> --------------------------
@@ -153,7 +153,7 @@ void send_all(const char *msg)
 {
 	char buffer[MSG_BUFFER_SIZE];
 	for(int i = 0; i < MAX_CLIENTS; i++) {
-		if(client_list[i].valid != NULL && *(client_list[i].valid) == 1) {
+		if(client_list[i].valid != 0 && client_list[i].valid == 1) {
 			send(client_list[i].clisockfd, msg, MSG_BUFFER_SIZE, 0);
 		}
 	}
@@ -178,7 +178,7 @@ void send_chatroom(const char *msg, int chat_no)
 {
 	char buffer[MSG_BUFFER_SIZE];
 	for(int i = 0; i < MAX_CLIENTS; i++) {
-		if(client_list[i].valid != NULL && *(client_list[i].valid) == 1 && client_list[i].chat_room_no == chat_no) {
+		if(client_list[i].valid != 0 && client_list[i].valid == 1 && client_list[i].chat_room_no == chat_no) {
 			send(client_list[i].clisockfd, msg, MSG_BUFFER_SIZE, 0);
 		}
 	}
@@ -188,7 +188,7 @@ void print_client_list() {
 	printf("Updated Client List: \n");
 	int num = 1;
 	for(int i = 0; i < MAX_CLIENTS; i++) {
-		if(client_list[i].valid != NULL && *(client_list[i].valid) == 1) {
+		if(client_list[i].valid != 0 && client_list[i].valid == 1) {
 			printf("%d: %s %d\n", num, client_list[i].cli_username, client_list[i].chat_room_no);
 			num++;
 		}
@@ -205,7 +205,8 @@ void* thread_main(void* args)
 	char* username_thread = strdup(((ThreadArgs*) args)->username_thread);
 	int chatroom_no = ((ThreadArgs*) args)->chatroom_no;
 	char* ip_thread = strdup(((ThreadArgs*) args)->ip_thread);
-	struct ClientInfo thread_client = ((ThreadArgs*) args)->thread_client;
+	//struct ClientInfo thread_client = ((ThreadArgs*) args)->thread_client;
+  int client_index = ((ThreadArgs*) args)->client_index;
 	free(args);
 
 	print_client_list();
@@ -272,15 +273,15 @@ void* thread_main(void* args)
 	char* bye_str = "\033[3mhas left the chat room!\033[3m";
 
 	create_server_message(bye_msg, username_thread, ip_thread, 0, bye_str);
-	send_chatroom(bye_msg, thread_client.chat_room_no);
+	send_chatroom(bye_msg, client_list[client_index].chat_room_no);
 
 	chatroom_list[chatroom_no]--;
 	if(chatroom_list[chatroom_no] == 0) n_rooms--;
 	// set valid to 0
-	*thread_client.valid = 0;
+	client_list[client_index].valid = 0;
 
 	print_client_list();
-	
+
 	return NULL;
 }
 
@@ -288,6 +289,10 @@ int main(int argc, char** argv) {
 	srand(time(NULL)); //random number generator for colors
 
 	client_list = (struct ClientInfo*)malloc(sizeof(struct ClientInfo) * MAX_CLIENTS);
+
+  for(int i = 0; i < MAX_CLIENTS; i++) {
+    client_list[i].valid = 0;
+  }
 	
 	// CREATE SERVER SOCKET
     	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -427,15 +432,20 @@ int main(int argc, char** argv) {
 		used_Color[client_color] = 1; //mark as used
 		new_client.color = color_Print[client_color];
 
-		new_client.valid = (int*)malloc(sizeof(int));
-		*(new_client.valid) = 1;
+		new_client.valid = 1;
 		strncpy(new_client.cli_username, username, sizeof(new_client.cli_username));
 		new_client.clisockfd = newsockfd; //ip addr
 		strcpy(new_client.cli_ip_iddr, inet_ntoa(cli_addr.sin_addr));
 		new_client.chat_room_no = chat_index;
 		//new_client.chat_room_no = room_no; //which chat room they're in
 		//append client to list
-		client_list[num_clients++] = new_client;
+    for(int i = 0; i < MAX_CLIENTS; i++) {
+      if(client_list[i].valid == 0) {
+        client_list[i] = new_client;
+        num_clients++;
+        break;
+      }
+    }
 
 		// printf("%d: %s has connected: %s\n", num_clients, username, inet_ntoa(cli_addr.sin_addr));
 
@@ -447,7 +457,7 @@ int main(int argc, char** argv) {
 		strcpy(args->username_thread, username);
 		args->chatroom_no = 0;
 		strcpy(args->ip_thread, inet_ntoa(cli_addr.sin_addr));
-		args->thread_client = new_client;
+		args->client_index = num_clients - 1;
 
 		pthread_t tid;
 		if (pthread_create(&tid, NULL, thread_main, (void*) args) != 0) error("ERROR creating a new thread");
