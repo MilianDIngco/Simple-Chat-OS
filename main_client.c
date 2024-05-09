@@ -223,7 +223,7 @@ void* recv_thread(void* args) {
 			memset(message, 0, MSG_SIZE);
 		}
 	} while (nrcv > 0 && !client_leave);
-   
+
 	return NULL;
 }
 
