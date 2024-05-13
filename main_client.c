@@ -16,7 +16,7 @@ USERNAME CANNOT INCLUDE [
 #include <net/if.h>
 #include <arpa/inet.h>
 
-#define PORT_NUM 10005
+#define PORT_NUM 15000
 #define USERNAME_SIZE 50
 #define MSG_BUFFER_SIZE 256
 #define MSG_SIZE 65536
